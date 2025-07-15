@@ -3,9 +3,15 @@ import './globals.css'
 import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
-  title: 'It\'s Ready - Food Freshness Analyzer',
-  description: 'Analyze the freshness of your food with AI',
-  generator: 'v0.dev',
+  title: 'FreshSense - AI Food Freshness Analyzer',
+  description: 'Upload food photos and get instant AI-powered freshness analysis. Reduce food waste with smart freshness detection.',
+  keywords: 'food freshness, AI analysis, food waste, freshness detector, food safety',
+  authors: [{ name: 'NuWorld Agency' }],
+  creator: 'NuWorld Agency',
+  publisher: 'NuWorld Agency',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  themeColor: '#10b981',
+  robots: 'index, follow',
 }
 
 export default function RootLayout({

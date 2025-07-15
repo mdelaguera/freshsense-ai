@@ -97,8 +97,8 @@ export default function Home() {
         ) : (
           <div className="w-full max-w-md mx-auto">
             <div className="text-center mb-4 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">It&apos;s Ready</h1>
-              <p className="text-muted-foreground mt-1 sm:mt-2">Food Freshness Analyzer</p>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-green-600">FreshSense</h1>
+              <p className="text-muted-foreground mt-1 sm:mt-2">AI-Powered Food Freshness Analyzer</p>
             </div>
             <Card className="w-full">
               <CardHeader className="px-4 py-3 sm:p-6">
