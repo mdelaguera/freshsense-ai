@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { FoodFreshnessResults } from "@/components/food-freshness-results"
 import { ImageUpload } from "@/components/image-upload"
 import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
+import { trackImageUpload, trackAnalysisRequest, trackAnalysisComplete, trackAnalysisError, trackUserJourney } from "@/lib/analytics"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -21,6 +22,10 @@ export default function Home() {
     // Create preview URL
     const objectUrl = URL.createObjectURL(file)
     setImagePreview(objectUrl)
+    
+    // Track image upload
+    trackImageUpload(file.size, file.type)
+    trackUserJourney('image_selected')
   }
 
   const handleAnalyze = async () => {
@@ -30,28 +35,43 @@ export default function Home() {
     }
 
     setIsAnalyzing(true)
+    const startTime = Date.now()
+    
+    // Track analysis request
+    trackAnalysisRequest(true) // Assume webhook available for now
+    trackUserJourney('analysis_started')
+    
     try {
       toast.info("Remember to activate the test webhook in n8n before sending the image!");
       toast.info("Sending image to analysis service...");
       const results = await analyzeFoodImage(selectedImage)
+      const duration = Date.now() - startTime
       
       if (results.error) {
+        trackAnalysisError(results.error)
         toast.error(`Analysis failed: ${results.error}`)
         console.error("Analysis error details:", results)
       } else if (results.raw_response?.simulatedData) {
         // Show special message for simulated data
+        trackAnalysisRequest(false) // Update to reflect simulated data
+        trackAnalysisComplete(results.identified_food, results.assessment_confidence, duration)
+        trackUserJourney('analysis_complete_simulated')
         toast.warning("Using simulated data - n8n webhook not available");
         setAnalysisResults(results)
         setShowResults(true)
       } else if (!results.identified_food || results.identified_food === "Unknown") {
+        trackAnalysisError('incomplete_data')
         toast.error("Food analysis returned incomplete data. Please try again with a clearer image.")
         console.log("Incomplete response:", results)
       } else {
+        trackAnalysisComplete(results.identified_food, results.assessment_confidence, duration)
+        trackUserJourney('analysis_complete_success')
         toast.success(`Analysis complete: ${results.identified_food} identified!`)
         setAnalysisResults(results)
         setShowResults(true)
       }
     } catch (error) {
+      trackAnalysisError(`exception: ${error}`)
       toast.error("Failed to analyze image. Please try again.")
       console.error("Analysis error:", error)
     } finally {
@@ -60,6 +80,7 @@ export default function Home() {
   }
 
   const handleBack = () => {
+    trackUserJourney('back_to_upload')
     setShowResults(false)
     setSelectedImage(null)
     setImagePreview(null)

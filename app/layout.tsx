@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
+import { AnalyticsProvider } from '@/components/analytics-provider'
 
 export const metadata: Metadata = {
   title: 'FreshSense - AI Food Freshness Analyzer',
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <AnalyticsProvider>
+          {children}
+        </AnalyticsProvider>
         <Toaster position="top-center" richColors />
       </body>
     </html>

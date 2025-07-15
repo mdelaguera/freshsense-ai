@@ -1,0 +1,54 @@
+import * as Sentry from "@sentry/nextjs";
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  
+  // Environment setup
+  environment: process.env.NODE_ENV || 'development',
+  
+  // Performance monitoring
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+  
+  // Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  
+  // Debug mode for development
+  debug: process.env.NODE_ENV === 'development',
+  
+  // Integrations
+  integrations: [
+    new Sentry.Replay({
+      maskAllText: true,
+      blockAllMedia: true,
+    }),
+  ],
+  
+  // Release tracking
+  release: process.env.npm_package_version,
+  
+  // Filter out noise
+  beforeSend(event) {
+    // Filter out development noise
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Sentry event:', event);
+    }
+    
+    // Filter out certain errors
+    if (event.exception) {
+      const error = event.exception.values?.[0];
+      if (error?.type === 'ChunkLoadError' || error?.type === 'ResizeObserver loop limit exceeded') {
+        return null;
+      }
+    }
+    
+    return event;
+  },
+  
+  // Set user context
+  initialScope: {
+    tags: {
+      component: 'FreshSense-Client'
+    }
+  }
+});
