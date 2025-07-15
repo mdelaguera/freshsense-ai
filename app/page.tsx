@@ -1,0 +1,133 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { FoodFreshnessResults } from "@/components/food-freshness-results"
+import { ImageUpload } from "@/components/image-upload"
+import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
+import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
+
+export default function Home() {
+  const [showResults, setShowResults] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisResults, setAnalysisResults] = useState<FoodAnalysisResult | null>(null)
+
+  const handleImageSelected = (file: File) => {
+    setSelectedImage(file)
+    // Create preview URL
+    const objectUrl = URL.createObjectURL(file)
+    setImagePreview(objectUrl)
+  }
+
+  const handleAnalyze = async () => {
+    if (!selectedImage) {
+      toast.error("Please select an image to analyze")
+      return
+    }
+
+    setIsAnalyzing(true)
+    try {
+      toast.info("Remember to activate the test webhook in n8n before sending the image!");
+      toast.info("Sending image to analysis service...");
+      const results = await analyzeFoodImage(selectedImage)
+      
+      if (results.error) {
+        toast.error(`Analysis failed: ${results.error}`)
+        console.error("Analysis error details:", results)
+      } else if (results.raw_response?.simulatedData) {
+        // Show special message for simulated data
+        toast.warning("Using simulated data - n8n webhook not available");
+        setAnalysisResults(results)
+        setShowResults(true)
+      } else if (!results.identified_food || results.identified_food === "Unknown") {
+        toast.error("Food analysis returned incomplete data. Please try again with a clearer image.")
+        console.log("Incomplete response:", results)
+      } else {
+        toast.success(`Analysis complete: ${results.identified_food} identified!`)
+        setAnalysisResults(results)
+        setShowResults(true)
+      }
+    } catch (error) {
+      toast.error("Failed to analyze image. Please try again.")
+      console.error("Analysis error:", error)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const handleBack = () => {
+    setShowResults(false)
+    setSelectedImage(null)
+    setImagePreview(null)
+    setAnalysisResults(null)
+  }
+
+  // Format the API results to match the component's expected format
+  const formatResultsForDisplay = () => {
+    if (!analysisResults) return {
+      identifiedFood: "Unknown",
+      visualAssessment: "Good" as const,
+      keyVisualIndicators: "No data available",
+      estimatedRemainingFreshness: "0",
+      assessmentConfidence: "Low" as const,
+      userNotes: "",
+      imageUrl: imagePreview || "/placeholder.svg?height=400&width=400",
+    }
+
+    return {
+      identifiedFood: analysisResults.identified_food,
+      visualAssessment: analysisResults.visual_assessment as "Good" | "Poor - Use Immediately" | "Inedible - Discard Immediately",
+      keyVisualIndicators: analysisResults.key_visual_indicators,
+      estimatedRemainingFreshness: analysisResults.estimated_remaining_freshness_days,
+      assessmentConfidence: analysisResults.assessment_confidence as "High" | "Medium" | "Low",
+      userNotes: analysisResults.user_verification_notes,
+      imageUrl: imagePreview || "/placeholder.svg?height=400&width=400",
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="container mx-auto px-4">
+        {showResults && analysisResults ? (
+          <FoodFreshnessResults data={formatResultsForDisplay()} onBack={handleBack} />
+        ) : (
+          <div className="w-full max-w-md mx-auto">
+            <div className="text-center mb-4 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">It&apos;s Ready</h1>
+              <p className="text-muted-foreground mt-1 sm:mt-2">Food Freshness Analyzer</p>
+            </div>
+            <Card className="w-full">
+              <CardHeader className="px-4 py-3 sm:p-6">
+                <CardTitle className="text-lg sm:text-xl">Food Freshness Analysis</CardTitle>
+                <CardDescription className="text-sm">
+                  Upload or take a photo of your food to analyze its freshness
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-4 py-2 sm:p-6 space-y-3 sm:space-y-4">
+                <ImageUpload onImageSelected={handleImageSelected} />
+                <Button 
+                  className="w-full h-12 text-base" 
+                  onClick={handleAnalyze}
+                  disabled={!selectedImage || isAnalyzing}
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    "Analyze Food Freshness"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
