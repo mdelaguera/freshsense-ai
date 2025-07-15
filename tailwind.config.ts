@@ -11,6 +11,29 @@ const config: Config = {
   theme: {
   	extend: {
   		colors: {
+  			// FreshSense Brand Colors
+  			'fresh-green': {
+  				50: '#f0fdf4',
+  				100: '#dcfce7', 
+  				500: '#22c55e',
+  				600: '#16a34a',
+  				700: '#15803d',
+  				900: '#14532d'
+  			},
+  			'fresh-orange': {
+  				50: '#fff7ed',
+  				100: '#ffedd5',
+  				500: '#f97316',
+  				600: '#ea580c',
+  				700: '#c2410c'
+  			},
+  			'fresh-red': {
+  				50: '#fef2f2',
+  				100: '#fee2e2',
+  				500: '#ef4444',
+  				600: '#dc2626',
+  				700: '#b91c1c'
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

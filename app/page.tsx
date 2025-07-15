@@ -7,7 +7,7 @@ import { FoodFreshnessResults } from "@/components/food-freshness-results"
 import { ImageUpload } from "@/components/image-upload"
 import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
 import { trackImageUpload, trackAnalysisRequest, trackAnalysisComplete, trackAnalysisError, trackUserJourney } from "@/lib/analytics"
-import { Loader2 } from "lucide-react"
+import { Loader2, Leaf, Scan } from "lucide-react"
 import { toast } from "sonner"
 
 export default function Home() {
@@ -111,15 +111,22 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <main className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100 py-4 sm:py-8">
       <div className="container mx-auto px-4">
         {showResults && analysisResults ? (
           <FoodFreshnessResults data={formatResultsForDisplay()} onBack={handleBack} />
         ) : (
           <div className="w-full max-w-md mx-auto">
             <div className="text-center mb-4 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-green-600">FreshSense</h1>
+              <div className="flex items-center justify-center mb-4">
+                <div className="relative">
+                  <Leaf className="h-8 w-8 text-fresh-green-600 mr-3" />
+                  <Scan className="h-4 w-4 text-fresh-green-500 absolute -top-1 -right-1" />
+                </div>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-fresh-green-600">FreshSense</h1>
               <p className="text-muted-foreground mt-1 sm:mt-2">AI-Powered Food Freshness Analyzer</p>
+              <p className="text-xs text-fresh-green-600 mt-1">Reduce waste • Save money • Stay healthy</p>
             </div>
             <Card className="w-full">
               <CardHeader className="px-4 py-3 sm:p-6">
@@ -131,7 +138,7 @@ export default function Home() {
               <CardContent className="px-4 py-2 sm:p-6 space-y-3 sm:space-y-4">
                 <ImageUpload onImageSelected={handleImageSelected} />
                 <Button 
-                  className="w-full h-12 text-base" 
+                  className="w-full h-12 text-base bg-fresh-green-600 hover:bg-fresh-green-700 text-white font-medium" 
                   onClick={handleAnalyze}
                   disabled={!selectedImage || isAnalyzing}
                 >
