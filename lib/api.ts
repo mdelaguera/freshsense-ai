@@ -1,16 +1,11 @@
 /**
- * API service for handling food freshness analysis
+ * API service for handling food freshness analysis using Supabase Edge Functions
  */
 
-// n8n webhook URLs - these are now used via our proxy API endpoint
-const N8N_PROD_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://nuworld.app.n8n.cloud/webhook/f9afe891-e6f7-4702-9348-7485bfad5c68";
-const N8N_TEST_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_TEST_WEBHOOK_URL || "https://nuworld.app.n8n.cloud/webhook-test/f9afe891-e6f7-4702-9348-7485bfad5c68";
-
-// Store the webhook URLs for documentation purposes
-const N8N_WEBHOOK_URL = process.env.NODE_ENV === 'production' ? N8N_PROD_WEBHOOK_URL : N8N_TEST_WEBHOOK_URL;
-
-// Use our proxy API route to avoid CORS issues
-const API_ANALYZE_ENDPOINT = '/api/analyze';
+// Supabase Edge Function URL for food analysis
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const API_ANALYZE_ENDPOINT = `${SUPABASE_URL}/functions/v1/analyze-food`;
 
 export interface FoodAnalysisResult {
   timestamp: string;
@@ -77,14 +72,14 @@ function createMockResponse(imageFile: File, error?: string): FoodAnalysisResult
 }
 
 /**
- * Analyzes a food image by sending it to our proxy API endpoint, which forwards it to n8n webhook
+ * Analyzes a food image using Supabase Edge Function with OpenAI Vision
  * 
  * @param imageFile The image file to analyze
- * @returns Analysis results from the n8n webhook
+ * @returns Analysis results from OpenAI Vision API
  */
 export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisResult> {
   try {
-    console.log(`Sending image to proxy API endpoint: ${API_ANALYZE_ENDPOINT}`);
+    console.log(`Sending image to Supabase Edge Function: ${API_ANALYZE_ENDPOINT}`);
     
     // Convert image to base64
     const base64Image = await convertToBase64(imageFile);
@@ -95,26 +90,21 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
       return createMockResponse(imageFile, 'Failed to properly encode image');
     }
     
-    // Prepare payload for n8n webhook
+    // Prepare payload for Supabase Edge Function
     const payload = {
-      // The full data URL format is necessary for n8n binary data recognition
-      // Format: "data:image/jpeg;base64,/9j/4AAQSkZJRgABA..."
-      image: base64Image,
-      filename: imageFile.name,
-      contentType: imageFile.type,
-      // Add timestamp for unique identification
-      timestamp: new Date().toISOString()
+      image: base64Image
     };
     
     console.log(`Sending payload with image size: ${base64Image.length} characters`);
     
     try {
-      // Send to our proxy API endpoint, which forwards to n8n webhook
+      // Send to Supabase Edge Function
       const response = await fetch(API_ANALYZE_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
         },
         body: JSON.stringify(payload)
       });
@@ -125,61 +115,41 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
         responseData = await response.json();
       } catch (e) {
         console.error('Failed to parse response as JSON:', e);
-        return createMockResponse(imageFile, 'Failed to parse webhook response');
+        return createMockResponse(imageFile, 'Failed to parse API response');
       }
 
       // Check if the response contains the proper analysis data
       if (!response.ok || responseData.error) {
         // Log the error for troubleshooting
-        console.error(`Proxy API error: ${response.status} ${response.statusText}`);
+        console.error(`Supabase API error: ${response.status} ${response.statusText}`);
         console.error(`Error details:`, responseData);
         
-        // If the proxy already sent a formatted error response matching our FoodAnalysisResult interface, use it
-        if (responseData.timestamp && responseData.identified_food) {
-          console.log("Using proxy-provided error response");
-          return responseData;
-        }
-        
-        // Otherwise, create a mock response
-        console.log("Using simulated data while n8n service is unavailable");
+        // Create a mock response for fallback
+        console.log("Using simulated data while API service is unavailable");
         return createMockResponse(imageFile, 
           responseData.error || `Error ${response.status}: ${response.statusText}`);
       }
 
-      console.log('Proxy API response:', responseData);
+      console.log('Supabase API response:', responseData);
       
-      // Check if we received n8n's expected format or our own format
-      if (responseData.identifiedFood) {
-        // n8n format, need to convert to our FoodAnalysisResult format
-        console.log('Received n8n format response, converting to FoodAnalysisResult format');
-        
-        // Format the response for the frontend based on the n8n webhook output structure
-        const formattedResponse: FoodAnalysisResult = {
-          timestamp: new Date().toISOString(),
-          image_source: imageFile.name,
-          identified_food: responseData.identifiedFood || 'Unknown',
-          visual_assessment: responseData.visualAssessment || 'Unable to determine',
-          key_visual_indicators: responseData.keyIndicators || 'No indicators provided',
-          estimated_remaining_freshness_days: responseData.estimatedFreshnessDays || 'Unknown',
-          assessment_confidence: responseData.confidence || 'Low',
-          disclaimer: responseData.importantDisclaimer || 'DISCLAIMER: This is an automated analysis and should not be the sole basis for food safety decisions.',
-          user_verification_notes: '',
-          raw_response: responseData
-        };
-        
-        return formattedResponse;
-      } else if (responseData.identified_food) {
-        // Already in our format
-        console.log('Received response in FoodAnalysisResult format');
-        return responseData;
-      } else {
-        // Unknown format, create a mock response
-        console.error('Received unrecognized response format:', responseData);
-        return createMockResponse(imageFile, 'Received unrecognized response format');
-      }
+      // Format the response for the frontend
+      const formattedResponse: FoodAnalysisResult = {
+        timestamp: new Date().toISOString(),
+        image_source: imageFile.name,
+        identified_food: responseData.identified_food || 'Unknown',
+        visual_assessment: responseData.visual_assessment || 'Unable to determine',
+        key_visual_indicators: responseData.key_visual_indicators || 'No indicators provided',
+        estimated_remaining_freshness_days: responseData.estimated_remaining_freshness_days || 'Unknown',
+        assessment_confidence: responseData.assessment_confidence || 'Low',
+        disclaimer: 'DISCLAIMER: This is an automated analysis and should not be the sole basis for food safety decisions.',
+        user_verification_notes: responseData.user_verification_notes || '',
+        raw_response: responseData
+      };
+      
+      return formattedResponse;
       
     } catch (error) {
-      console.error('Error communicating with webhook:', error);
+      console.error('Error communicating with Supabase API:', error);
       return createMockResponse(imageFile, 
         `Communication error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
