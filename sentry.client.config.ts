@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
+  enabled: !!process.env.SENTRY_DSN,
   
   // Environment setup
   environment: process.env.NODE_ENV || 'development',
@@ -9,20 +10,20 @@ Sentry.init({
   // Performance monitoring
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   
-  // Session Replay
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
+  // Session Replay - only enable if DSN is provided
+  replaysSessionSampleRate: process.env.SENTRY_DSN ? 0.1 : 0,
+  replaysOnErrorSampleRate: process.env.SENTRY_DSN ? 1.0 : 0,
   
   // Debug mode for development
   debug: process.env.NODE_ENV === 'development',
   
-  // Integrations
-  integrations: [
-    new Sentry.Replay({
+  // Integrations - only add Replay if Sentry is configured
+  integrations: process.env.SENTRY_DSN ? [
+    Sentry.replayIntegration({
       maskAllText: true,
       blockAllMedia: true,
     }),
-  ],
+  ] : [],
   
   // Release tracking
   release: process.env.npm_package_version,
