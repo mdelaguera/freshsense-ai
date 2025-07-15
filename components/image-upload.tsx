@@ -1,20 +1,64 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Camera, Upload, X } from "lucide-react"
+import { Camera, Upload, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import Image from "next/image"
 
 interface ImageUploadProps {
   onImageSelected: (file: File) => void
 }
 
+// File validation constants
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+const ACCEPTED_EXTENSIONS = ['.jpg', '.jpeg', '.png'];
+
 export function ImageUpload({ onImageSelected }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const validateFile = (file: File): string | null => {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return `File size too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`;
+    }
+
+    // Check file type
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      return `File type not supported. Please use: ${ACCEPTED_EXTENSIONS.join(', ')}`;
+    }
+
+    // Check file extension as additional validation
+    const fileExtension = file.name.toLowerCase().split('.').pop();
+    if (!fileExtension || !ACCEPTED_EXTENSIONS.some(ext => ext.substring(1) === fileExtension)) {
+      return `File extension not supported. Please use: ${ACCEPTED_EXTENSIONS.join(', ')}`;
+    }
+
+    return null; // File is valid
+  };
+
   const handleFileChange = (file: File) => {
+    // Validate the file
+    const validationError = validateFile(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    // Log file info for testing
+    console.log('Image upload:', {
+      name: file.name,
+      size: `${(file.size / (1024 * 1024)).toFixed(2)}MB`,
+      type: file.type,
+      lastModified: new Date(file.lastModified).toISOString()
+    });
+
+    // Show success toast
+    toast.success(`Image selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
+    
     // Create preview URL
     const objectUrl = URL.createObjectURL(file)
     setPreview(objectUrl)
@@ -113,7 +157,7 @@ export function ImageUpload({ onImageSelected }: ImageUploadProps) {
                 <p className="text-sm font-medium">Drag and drop your image here</p>
               </div>
               <p className="text-xs text-muted-foreground text-center">
-                Supported formats: JPEG, PNG
+                Supported formats: JPEG, PNG (max 10MB)
               </p>
             </div>
             <div className="flex space-x-4">
