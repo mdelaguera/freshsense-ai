@@ -2,10 +2,8 @@
  * API service for handling food freshness analysis using Supabase Edge Functions
  */
 
-// Supabase Edge Function URL for food analysis
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const API_ANALYZE_ENDPOINT = `${SUPABASE_URL}/functions/v1/analyze-food`;
+// Use Next.js API route which handles Supabase Edge Function integration
+const API_ANALYZE_ENDPOINT = '/api/analyze';
 
 export interface FoodAnalysisResult {
   timestamp: string;
@@ -39,35 +37,21 @@ async function convertToBase64(file: File): Promise<string> {
 }
 
 /**
- * Creates a mock response for testing when the n8n service is unavailable
+ * Creates a fallback response when the analysis service is unavailable
  */
-function createMockResponse(imageFile: File, error?: string): FoodAnalysisResult {
-  // Determine a fake food type based on the image name for demonstration
-  let foodType = "Unknown Food";
-  const fileName = imageFile.name.toLowerCase();
-  
-  if (fileName.includes("apple") || fileName.includes("fruit")) {
-    foodType = "Apple";
-  } else if (fileName.includes("banana")) {
-    foodType = "Banana";
-  } else if (fileName.includes("chicken") || fileName.includes("meat")) {
-    foodType = "Raw Chicken";
-  } else if (fileName.includes("vegetable") || fileName.includes("veg")) {
-    foodType = "Mixed Vegetables";
-  }
-  
+function createFallbackResponse(imageFile: File, error?: string): FoodAnalysisResult {
   return {
     timestamp: new Date().toISOString(),
     image_source: imageFile.name,
-    identified_food: foodType,
-    visual_assessment: "Good",
-    key_visual_indicators: "This is simulated data while the n8n service is being configured. The real service will provide accurate visual indicators.",
-    estimated_remaining_freshness_days: "3-5",
-    assessment_confidence: "Medium",
-    disclaimer: "DISCLAIMER: This is simulated data for demonstration purposes only. The real service will provide accurate food freshness analysis.",
-    user_verification_notes: "",
+    identified_food: 'Unknown Food',
+    visual_assessment: 'Unable to determine',
+    key_visual_indicators: 'Analysis service unavailable',
+    estimated_remaining_freshness_days: '0',
+    assessment_confidence: 'Low',
+    disclaimer: 'DISCLAIMER: Analysis service is currently unavailable. Please try again later.',
+    user_verification_notes: '',
     error: error,
-    raw_response: { simulatedData: true }
+    raw_response: { serviceUnavailable: true }
   };
 }
 
@@ -79,7 +63,7 @@ function createMockResponse(imageFile: File, error?: string): FoodAnalysisResult
  */
 export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisResult> {
   try {
-    console.log(`Sending image to Supabase Edge Function: ${API_ANALYZE_ENDPOINT}`);
+    console.log(`Sending image to API endpoint: ${API_ANALYZE_ENDPOINT}`);
     
     // Convert image to base64
     const base64Image = await convertToBase64(imageFile);
@@ -87,10 +71,10 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
     // Verify that we have the complete data URL format
     if (!base64Image || !base64Image.startsWith('data:')) {
       console.error('Invalid base64 image format - missing data URL prefix');
-      return createMockResponse(imageFile, 'Failed to properly encode image');
+      return createFallbackResponse(imageFile, 'Failed to properly encode image');
     }
     
-    // Prepare payload for Supabase Edge Function
+    // Prepare payload for the API
     const payload = {
       image: base64Image
     };
@@ -98,13 +82,11 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
     console.log(`Sending payload with image size: ${base64Image.length} characters`);
     
     try {
-      // Send to Supabase Edge Function
+      // Send to Next.js API route (which forwards to Supabase Edge Function)
       const response = await fetch(API_ANALYZE_ENDPOINT, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'apikey': SUPABASE_ANON_KEY
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
@@ -115,22 +97,19 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
         responseData = await response.json();
       } catch (e) {
         console.error('Failed to parse response as JSON:', e);
-        return createMockResponse(imageFile, 'Failed to parse API response');
+        return createFallbackResponse(imageFile, 'Failed to parse API response');
       }
 
       // Check if the response contains the proper analysis data
       if (!response.ok || responseData.error) {
-        // Log the error for troubleshooting
-        console.error(`Supabase API error: ${response.status} ${response.statusText}`);
+        console.error(`API error: ${response.status} ${response.statusText}`);
         console.error(`Error details:`, responseData);
         
-        // Create a mock response for fallback
-        console.log("Using simulated data while API service is unavailable");
-        return createMockResponse(imageFile, 
+        return createFallbackResponse(imageFile, 
           responseData.error || `Error ${response.status}: ${response.statusText}`);
       }
 
-      console.log('Supabase API response:', responseData);
+      console.log('API response:', responseData);
       
       // Format the response for the frontend
       const formattedResponse: FoodAnalysisResult = {
@@ -149,13 +128,13 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
       return formattedResponse;
       
     } catch (error) {
-      console.error('Error communicating with Supabase API:', error);
-      return createMockResponse(imageFile, 
+      console.error('Error communicating with API:', error);
+      return createFallbackResponse(imageFile, 
         `Communication error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   } catch (error) {
     console.error('Error in analyzeFoodImage:', error);
-    return createMockResponse(imageFile, 
+    return createFallbackResponse(imageFile, 
       `Analysis error: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

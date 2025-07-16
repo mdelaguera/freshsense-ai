@@ -1,7 +1,7 @@
 # It's Ready - Food Freshness Analyzer
 
 ## Overview
-It's Ready is a web application that allows users to take photos of raw food items and receive freshness analysis. The application processes images through a GPT-powered n8n workflow and returns structured information about the food's freshness status.
+FreshSense AI is a web application that allows users to take photos of raw food items and receive freshness analysis. The application processes images through OpenAI Vision API via Supabase Edge Functions and returns structured information about the food's freshness status.
 
 ## Features
 - Upload food images for freshness analysis
@@ -11,12 +11,12 @@ It's Ready is a web application that allows users to take photos of raw food ite
 - Confidence level for each assessment
 
 ## Tech Stack
-- **Backend**: Python/Flask
-- **Frontend**: Next.js (to be developed)
-- **Image Processing**: n8n workflow with GPT integration
+- **Frontend**: Next.js 15 with TypeScript
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI Processing**: OpenAI Vision API (GPT-4o)
 - **UI Framework**: Shadcn/ui + Tailwind CSS
-- **Animations**: Framer Motion
-- **Database**: NocoDB (optional integration)
+- **Database**: Supabase PostgreSQL
+- **Analytics**: Vercel Analytics + Sentry
 
 ## Getting Started
 

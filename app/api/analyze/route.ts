@@ -1,149 +1,142 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase, foodAnalysisService } from '@/lib/supabase';
 
-// n8n webhook URLs
-const N8N_PROD_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://nuworld.app.n8n.cloud/webhook/f9afe891-e6f7-4702-9348-7485bfad5c68";
-const N8N_TEST_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_TEST_WEBHOOK_URL || "https://nuworld.app.n8n.cloud/webhook-test/f9afe891-e6f7-4702-9348-7485bfad5c68";
-
-// Use production URL in production, test URL in development
-const N8N_WEBHOOK_URL = process.env.NODE_ENV === 'production' ? N8N_PROD_WEBHOOK_URL : N8N_TEST_WEBHOOK_URL;
+// Supabase Edge Function URL
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const ANALYZE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/analyze-food`;
 
 export async function POST(req: NextRequest) {
   try {
-    console.log(`Proxy forwarding request to n8n webhook: ${N8N_WEBHOOK_URL}`);
+    console.log(`Sending request to Supabase Edge Function: ${ANALYZE_FUNCTION_URL}`);
+    
+    // Validate Supabase configuration
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error('Supabase configuration missing');
+      return NextResponse.json({
+        error: 'Supabase configuration missing',
+        identified_food: 'Unknown',
+        visual_assessment: 'Unable to determine',
+        key_visual_indicators: 'Service configuration error',
+        estimated_remaining_freshness_days: '0',
+        assessment_confidence: 'Low'
+      }, { status: 500 });
+    }
     
     // Get the request body
     const body = await req.json();
     
     // Log what we're about to send (with truncated image data for clarity)
     const imageDataSample = body.image ? `${body.image.substring(0, 50)}...` : 'No image data';
-    console.log(`Sending request with filename: ${body.filename}, contentType: ${body.contentType}, imageDataSample: ${imageDataSample}`);
+    console.log(`Sending request with image data sample: ${imageDataSample}`);
 
-    // Forward the request to n8n webhook with timeout and additional logging
+    // Forward the request to Supabase Edge Function
     let response;
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
-      response = await fetch(N8N_WEBHOOK_URL, {
+      response = await fetch(ANALYZE_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ image: body.image }),
         signal: controller.signal
       });
       
       clearTimeout(timeoutId);
       
       // Log the status for debugging
-      console.log(`N8N webhook response status: ${response.status} ${response.statusText}`);
+      console.log(`Supabase Edge Function response status: ${response.status} ${response.statusText}`);
       
     } catch (fetchError) {
       // Handle fetch errors (network issues, timeouts, etc.)
       console.error('Fetch error:', fetchError);
       return NextResponse.json({
-        identifiedFood: 'Unknown',
-        visualAssessment: 'Unable to determine',
-        keyIndicators: 'Failed to connect to analysis service',
-        estimatedFreshnessDays: '0',
-        confidence: 'None',
-        importantDisclaimer: 'DISCLAIMER: Analysis failed due to connectivity issues.',
-        error: `Failed to connect to n8n: ${fetchError instanceof Error ? fetchError.message : 'Connection error'}`
-      }, { status: 200 }); // Using 200 with structured error data
+        error: `Failed to connect to Supabase: ${fetchError instanceof Error ? fetchError.message : 'Connection error'}`,
+        identified_food: 'Unknown',
+        visual_assessment: 'Unable to determine',
+        key_visual_indicators: 'Failed to connect to analysis service',
+        estimated_remaining_freshness_days: '0',
+        assessment_confidence: 'Low'
+      }, { status: 500 });
     }
     
-    // Ensure we get a proper response from n8n
+    // Process the response from Supabase Edge Function
     if (response.ok) {
       try {
         const data = await response.json();
-        console.log('Successfully received n8n response:', data);
+        console.log('Successfully received Supabase response:', data);
         
-        // Check if the response has the expected structure
-        if (data && typeof data === 'object') {
-          // Transform if needed or return as is
-          return NextResponse.json(data);
-        } else {
-          console.error('Unexpected response format from n8n:', data);
-          return NextResponse.json({
-            identifiedFood: 'Unknown',
-            visualAssessment: 'Unable to determine',
-            keyIndicators: 'Analysis service returned unexpected data format',
-            estimatedFreshnessDays: '0',
-            confidence: 'None',
-            importantDisclaimer: 'DISCLAIMER: Analysis failed due to service issues.',
-            error: 'Unexpected data format from n8n'
+        // Store the analysis in the database
+        try {
+          await foodAnalysisService.create({
+            identified_food: data.identified_food || 'Unknown',
+            visual_assessment: data.visual_assessment || 'Unable to determine',
+            key_visual_indicators: data.key_visual_indicators,
+            estimated_remaining_freshness_days: data.estimated_remaining_freshness_days,
+            confidence: data.assessment_confidence || 'Low',
+            user_verification_notes: data.user_verification_notes,
+            safety_warning: data.safety_warning
           });
+          console.log('Analysis stored in database successfully');
+        } catch (dbError) {
+          console.error('Failed to store analysis in database:', dbError);
+          // Don't fail the request if database storage fails
         }
-      } catch (parseError) {
-        console.error('Error parsing n8n response:', parseError);
-        const text = await response.text();
-        console.log('Raw response text:', text.substring(0, 500)); // Log first 500 chars
         
-        // Return a formatted error that matches our expected structure
+        // Return the analysis data
+        return NextResponse.json(data);
+        
+      } catch (parseError) {
+        console.error('Error parsing Supabase response:', parseError);
+        const text = await response.text();
+        console.log('Raw response text:', text.substring(0, 500));
+        
         return NextResponse.json({
-          identifiedFood: 'Unknown',
-          visualAssessment: 'Unable to determine',
-          keyIndicators: 'Analysis failed due to response parsing error',
-          estimatedFreshnessDays: '0',
-          confidence: 'None',
-          importantDisclaimer: 'DISCLAIMER: Analysis failed. Please try again later.',
-          error: `Failed to parse n8n response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
-        });
+          error: `Failed to parse Supabase response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
+          identified_food: 'Unknown',
+          visual_assessment: 'Unable to determine',
+          key_visual_indicators: 'Analysis failed due to response parsing error',
+          estimated_remaining_freshness_days: '0',
+          assessment_confidence: 'Low'
+        }, { status: 500 });
       }
     }
     
     if (!response.ok) {
-      // Pass through the error response
       let errorMessage = 'Unknown error';
       try {
         const errorText = await response.text();
-        console.error(`Error from n8n webhook (${response.status}): ${errorText.substring(0, 500)}`); // Truncate long error messages
+        console.error(`Error from Supabase Edge Function (${response.status}): ${errorText.substring(0, 500)}`);
         errorMessage = errorText;
-        
-        // Save error to file system for debugging
-        if (typeof window === 'undefined') {
-          const fs = require('fs');
-          const path = require('path');
-          const errorPath = path.join(process.cwd(), 'logs', 'n8n-error.log');
-          
-          try {
-            if (!fs.existsSync(path.join(process.cwd(), 'logs'))) {
-              fs.mkdirSync(path.join(process.cwd(), 'logs'), { recursive: true });
-            }
-            fs.writeFileSync(errorPath, `${new Date().toISOString()}\n${response.status} ${response.statusText}\n${errorText}`);
-          } catch (fsErr) {
-            console.error('Could not write error log:', fsErr);
-          }
-        }
       } catch (e) {
         console.error('Error reading error response:', e);
       }
       
-      // Return a structured response
       return NextResponse.json({
-        identifiedFood: 'Unknown',
-        visualAssessment: 'Unable to determine',
-        keyIndicators: 'Analysis service returned an error',
-        estimatedFreshnessDays: '0',
-        confidence: 'None',
-        importantDisclaimer: 'DISCLAIMER: Analysis failed. Please try again later.',
-        error: `N8N webhook error: ${response.status} ${response.statusText}. ${errorMessage.substring(0, 200)}...`
-      });
+        error: `Supabase Edge Function error: ${response.status} ${response.statusText}. ${errorMessage.substring(0, 200)}...`,
+        identified_food: 'Unknown',
+        visual_assessment: 'Unable to determine',
+        key_visual_indicators: 'Analysis service returned an error',
+        estimated_remaining_freshness_days: '0',
+        assessment_confidence: 'Low'
+      }, { status: response.status });
     }
     
   } catch (error) {
-    console.error('Proxy error:', error);
+    console.error('API error:', error);
     
-    // Return a properly formatted error response
     return NextResponse.json({
-      identifiedFood: 'Unknown',
-      visualAssessment: 'Unable to determine',
-      keyIndicators: 'Analysis failed due to server error',
-      estimatedFreshnessDays: '0',
-      confidence: 'None',
-      importantDisclaimer: 'DISCLAIMER: Analysis failed due to a server error. Please try again later.',
-      error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`
-    }, { status: 200 }); // Using 200 with structured error
+      error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      identified_food: 'Unknown',
+      visual_assessment: 'Unable to determine',
+      key_visual_indicators: 'Analysis failed due to server error',
+      estimated_remaining_freshness_days: '0',
+      assessment_confidence: 'Low'
+    }, { status: 500 });
   }
 }

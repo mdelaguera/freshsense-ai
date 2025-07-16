@@ -39,19 +39,12 @@ export function FoodFreshnessAnalyzer() {
     setErrorMessage("")
 
     try {
-      // Format the payload according to what n8n expects
-      const fileExtension = image.startsWith('data:image/png') ? 'png' : 'jpeg'
-      const contentType = `image/${fileExtension}`
-      const filename = `food_image.${fileExtension}`
-      
+      // Format the payload for the analysis API
       const payload = {
-        image: image, // The full data URL as required by n8n
-        filename: filename,
-        contentType: contentType,
-        timestamp: new Date().toISOString()
+        image: image // The full data URL for analysis
       }
       
-      console.log('Sending image to proxy API endpoint: /api/analyze')
+      console.log('Sending image to analysis API endpoint: /api/analyze')
       console.log(`Sending payload with image size: ${image.length} characters`)
       
       const response = await fetch('/api/analyze', {

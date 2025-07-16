@@ -136,15 +136,7 @@ url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
 
-[edge_functions]
-enabled = true
-# Configure one of the supported request policies: `oneshot`, `per_worker`.
-# Use `oneshot` for hot reload, or `per_worker` for load testing.
-request_policy = "oneshot"
-[edge_functions.inspector]
-enabled = false
-# Configure one of the supported request policies: `oneshot`, `per_worker`.
-request_policy = "oneshot"
+# Functions are handled via API/Dashboard
 
 [analytics]
 enabled = false
