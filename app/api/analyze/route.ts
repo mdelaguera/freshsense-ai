@@ -93,8 +93,14 @@ export async function POST(req: NextRequest) {
         
       } catch (parseError) {
         console.error('Error parsing Supabase response:', parseError);
-        const text = await response.text();
-        console.log('Raw response text:', text.substring(0, 500));
+        let text = '';
+        try {
+          text = await response.text();
+          console.log('Raw response text:', text.substring(0, 1000));
+          console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        } catch (textError) {
+          console.error('Failed to read response text:', textError);
+        }
         
         return NextResponse.json({
           error: `Failed to parse Supabase response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
@@ -102,7 +108,12 @@ export async function POST(req: NextRequest) {
           visual_assessment: 'Unable to determine',
           key_visual_indicators: 'Analysis failed due to response parsing error',
           estimated_remaining_freshness_days: '0',
-          assessment_confidence: 'Low'
+          assessment_confidence: 'Low',
+          debug_info: {
+            response_status: response.status,
+            response_text: text.substring(0, 500),
+            parse_error: parseError instanceof Error ? parseError.message : 'Unknown parse error'
+          }
         }, { status: 500 });
       }
     }

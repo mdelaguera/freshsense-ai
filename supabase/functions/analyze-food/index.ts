@@ -42,22 +42,26 @@ serve(async (req) => {
         model: 'gpt-4o',
         messages: [
           {
+            role: 'system',
+            content: 'You are a food safety expert. Respond ONLY with valid JSON. Do not include any explanatory text, markdown, or code blocks. Return only the raw JSON object.'
+          },
+          {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: `Analyze this food image for freshness. Provide a detailed assessment in JSON format with the following structure:
-                {
-                  "identified_food": "specific food item name",
-                  "visual_assessment": "Good" | "Poor - Use Immediately" | "Inedible - Discard Immediately",
-                  "key_visual_indicators": "detailed description of visual signs observed",
-                  "estimated_remaining_freshness_days": "number as string",
-                  "assessment_confidence": "High" | "Medium" | "Low",
-                  "user_verification_notes": "specific recommendations for the user",
-                  "safety_warning": "any food safety concerns if applicable"
-                }
-                
-                Focus on visual indicators like color changes, texture, mold, bruising, wilting, or other signs of spoilage. Be specific about what you observe and provide actionable advice.`
+                text: `Analyze this food image for freshness and return ONLY a JSON object with this exact structure:
+{
+  "identified_food": "specific food item name",
+  "visual_assessment": "Good" | "Fair - Use Soon" | "Poor - Use Immediately" | "Inedible - Discard Immediately",
+  "key_visual_indicators": "detailed description of visual signs observed",
+  "estimated_remaining_freshness_days": "number as string",
+  "assessment_confidence": "High" | "Medium" | "Low",
+  "user_verification_notes": "specific recommendations for the user",
+  "safety_warning": "any food safety concerns if applicable"
+}
+
+Focus on visual indicators like color changes, texture, mold, bruising, wilting, or other signs of spoilage. Be specific about what you observe. Return ONLY the JSON object, no other text.`
               },
               {
                 type: 'image_url',
@@ -68,8 +72,9 @@ serve(async (req) => {
             ]
           }
         ],
-        max_tokens: 500,
-        temperature: 0.1
+        max_tokens: 800,
+        temperature: 0.1,
+        response_format: { type: "json_object" }
       })
     })
 
@@ -101,22 +106,47 @@ serve(async (req) => {
     // Parse the JSON response from OpenAI
     let analysisResult
     try {
-      // Extract JSON from the response (in case there's extra text)
-      const jsonMatch = analysisText.match(/\{[\s\S]*\}/)
+      console.log('Raw OpenAI response:', analysisText)
+      
+      // Try multiple parsing strategies
+      let jsonString = analysisText.trim()
+      
+      // Remove markdown code blocks if present
+      jsonString = jsonString.replace(/```json\s*|\s*```/g, '')
+      
+      // Extract JSON from the response (look for first { to last })
+      const jsonMatch = jsonString.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        analysisResult = JSON.parse(jsonMatch[0])
-      } else {
-        analysisResult = JSON.parse(analysisText)
+        jsonString = jsonMatch[0]
       }
+      
+      analysisResult = JSON.parse(jsonString)
+      
+      // Validate required fields and provide defaults
+      analysisResult = {
+        identified_food: analysisResult.identified_food || 'Unknown Food',
+        visual_assessment: analysisResult.visual_assessment || 'Unable to determine',
+        key_visual_indicators: analysisResult.key_visual_indicators || 'No specific indicators observed',
+        estimated_remaining_freshness_days: analysisResult.estimated_remaining_freshness_days || '0',
+        assessment_confidence: analysisResult.assessment_confidence || 'Low',
+        user_verification_notes: analysisResult.user_verification_notes || '',
+        safety_warning: analysisResult.safety_warning || ''
+      }
+      
     } catch (parseError) {
-      console.error('Failed to parse AI response:', analysisText)
-      return new Response(
-        JSON.stringify({ error: 'Failed to parse AI analysis' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      console.error('Failed to parse AI response:', parseError)
+      console.error('Original response text:', analysisText)
+      
+      // Return a structured fallback response instead of an error
+      analysisResult = {
+        identified_food: 'Unknown Food',
+        visual_assessment: 'Unable to determine',
+        key_visual_indicators: 'AI analysis failed - unable to parse response',
+        estimated_remaining_freshness_days: '0',
+        assessment_confidence: 'Low',
+        user_verification_notes: 'Please try uploading the image again',
+        safety_warning: 'Manual inspection recommended'
+      }
     }
 
     // Store the analysis in Supabase (optional)
