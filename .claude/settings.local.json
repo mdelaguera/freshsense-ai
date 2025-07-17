@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)",
+      "Bash(set SUPABASE_ACCESS_TOKEN=sbp_36c17aa714d8403ec57e4d493dca5d9db2699a65)",
+      "Bash(powershell:*)",
+      "Bash(deploy.bat)",
+      "Bash(cmd:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(supabase status:*)",
+      "Bash(compgen -c)",
+      "Bash(git commit:*)",
+      "Bash(supabase:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rm:*)"
+    ],
+    "deny": []
+  }
+}

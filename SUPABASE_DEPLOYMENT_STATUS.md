@@ -40,7 +40,7 @@ Go to Edge Functions settings and add:
 ```
 OPENAI_API_KEY=your-openai-api-key-here
 SUPABASE_URL=https://krlgqtpfrsnplwnnawlx.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtybGdxdHBmcnNucGx3bm5hd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDkzNjgsImV4cCI6MjA2ODE4NTM2OH0.LmXcfkgwIWVRuFeGakOynCil66NRRfDzSFhPBNcjYo4
+SUPABASE_ANON_KEY=your-anon-key-here
 ```
 
 ## 🧪 **Testing Commands**
@@ -48,15 +48,15 @@ SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 ### Test Database Connection:
 ```bash
 curl -X GET "https://krlgqtpfrsnplwnnawlx.supabase.co/rest/v1/food_analyses?select=*&limit=1" \
-  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtybGdxdHBmcnNucGx3bm5hd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDkzNjgsImV4cCI6MjA2ODE4NTM2OH0.LmXcfkgwIWVRuFeGakOynCil66NRRfDzSFhPBNcjYo4" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtybGdxdHBmcnNucGx3bm5hd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDkzNjgsImV4cCI6MjA2ODE4NTM2OH0.LmXcfkgwIWVRuFeGakOynCil66NRRfDzSFhPBNcjYo4"
+  -H "apikey: YOUR_SUPABASE_ANON_KEY" \
+  -H "Authorization: Bearer YOUR_SUPABASE_ANON_KEY"
 ```
 
 ### Test Edge Function:
 ```bash
 curl -X POST "https://krlgqtpfrsnplwnnawlx.supabase.co/functions/v1/analyze-food" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtybGdxdHBmcnNucGx3bm5hd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDkzNjgsImV4cCI6MjA2ODE4NTM2OH0.LmXcfkgwIWVRuFeGakOynCil66NRRfDzSFhPBNcjYo4" \
-  -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtybGdxdHBmcnNucGx3bm5hd2x4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI2MDkzNjgsImV4cCI6MjA2ODE4NTM2OH0.LmXcfkgwIWVRuFeGakOynCil66NRRfDzSFhPBNcjYo4" \
+  -H "Authorization: Bearer YOUR_SUPABASE_ANON_KEY" \
+  -H "apikey: YOUR_SUPABASE_ANON_KEY" \
   -H "Content-Type: application/json" \
   -d '{"image": "data:image/jpeg;base64,test"}'
 ```

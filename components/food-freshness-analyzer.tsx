@@ -39,18 +39,29 @@ export function FoodFreshnessAnalyzer() {
     setErrorMessage("")
 
     try {
-      // Format the payload for the analysis API
+      // Format the payload for the Supabase Edge Function
       const payload = {
         image: image // The full data URL for analysis
       }
       
-      console.log('Sending image to analysis API endpoint: /api/analyze')
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase configuration missing')
+      }
+      
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/analyze-food`
+      
+      console.log('Sending image to Supabase Edge Function:', edgeFunctionUrl)
       console.log(`Sending payload with image size: ${image.length} characters`)
       
-      const response = await fetch('/api/analyze', {
+      const response = await fetch(edgeFunctionUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'apikey': supabaseAnonKey
         },
         body: JSON.stringify(payload)
       })
@@ -58,33 +69,20 @@ export function FoodFreshnessAnalyzer() {
       const data = await response.json()
       
       // Check if there was an error in the response
-      if (data.error) {
-        console.error("Proxy API error:", response.status, response.statusText)
+      if (!response.ok || data.error) {
+        console.error("Supabase Edge Function error:", response.status, response.statusText)
         console.error("Error details:", data)
-        
-        // If n8n is unavailable (520 error), use simulated data for testing/demo purposes
-        if (data.error.includes("520")) {
-          console.log("Using simulated data while n8n service is unavailable")
-          
-          // Create simulated food analysis data
-          const mockData = generateMockAnalysisData(image)
-          
-          setResults(mockData)
-          setAnalysisState("results")
-          return
-        }
-        
-        throw new Error(data.error)
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
       }
       
-      console.log('Received response from backend:', data)
+      console.log('Received response from Supabase Edge Function:', data)
       
       // Transform the response to match what FreshnessResults component expects
       const transformedResults = {
-        identifiedFood: data.identifiedFood,
-        visualAssessment: data.visualAssessment,
-        keyVisualIndicators: data.keyIndicators,
-        estimatedRemainingFreshness: parseEstimatedDays(data.estimatedFreshnessDays),
+        identifiedFood: data.identified_food,
+        visualAssessment: data.visual_assessment,
+        keyVisualIndicators: data.key_visual_indicators,
+        estimatedRemainingFreshness: parseEstimatedDays(data.estimated_remaining_freshness_days),
         assessmentConfidence: data.confidence
       }
       

@@ -26,6 +26,13 @@ yarn-error.log*
 .env*.local
 .env
 
+# Sensitive files - do not commit
+test-api-key.js
+debug-api.js
+*DEPLOYMENT_STATUS.md
+*SUPABASE_DEPLOYMENT_STATUS.md
+MANUAL_SUPABASE_SETUP.md
+
 # Vercel
 .vercel
 

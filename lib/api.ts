@@ -2,8 +2,26 @@
  * API service for handling food freshness analysis using Supabase Edge Functions
  */
 
-// Use Next.js API route which handles Supabase Edge Function integration
-const API_ANALYZE_ENDPOINT = '/api/analyze';
+// Get Supabase configuration - check at runtime instead of module load
+function getSupabaseConfig() {
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  console.log('Supabase config check:', {
+    hasUrl: !!SUPABASE_URL,
+    hasKey: !!SUPABASE_ANON_KEY,
+    urlPrefix: SUPABASE_URL?.substring(0, 30) + '...',
+    keyPrefix: SUPABASE_ANON_KEY?.substring(0, 20) + '...'
+  });
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error(`Supabase configuration missing: URL=${!!SUPABASE_URL}, KEY=${!!SUPABASE_ANON_KEY}`);
+  }
+  
+  return { SUPABASE_URL, SUPABASE_ANON_KEY };
+}
+
+// Direct Supabase Edge Function endpoint will be constructed at runtime
 
 export interface FoodAnalysisResult {
   timestamp: string;
@@ -63,6 +81,10 @@ function createFallbackResponse(imageFile: File, error?: string): FoodAnalysisRe
  */
 export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisResult> {
   try {
+    // Get Supabase configuration
+    const { SUPABASE_URL, SUPABASE_ANON_KEY } = getSupabaseConfig();
+    const API_ANALYZE_ENDPOINT = `${SUPABASE_URL}/functions/v1/analyze-food`;
+    
     console.log(`Sending image to API endpoint: ${API_ANALYZE_ENDPOINT}`);
     
     // Convert image to base64
@@ -82,11 +104,20 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
     console.log(`Sending payload with image size: ${base64Image.length} characters`);
     
     try {
-      // Send to Next.js API route (which forwards to Supabase Edge Function)
+      console.log('About to fetch:', API_ANALYZE_ENDPOINT);
+      console.log('Headers:', {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY?.substring(0, 20)}...`,
+        'apikey': SUPABASE_ANON_KEY?.substring(0, 20) + '...'
+      });
+      
+      // Send directly to Supabase Edge Function
       const response = await fetch(API_ANALYZE_ENDPOINT, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
         },
         body: JSON.stringify(payload)
       });
@@ -94,10 +125,16 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
       // Always attempt to parse the response as JSON
       let responseData;
       try {
-        responseData = await response.json();
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText.substring(0, 500));
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        responseData = JSON.parse(responseText);
       } catch (e) {
         console.error('Failed to parse response as JSON:', e);
-        return createFallbackResponse(imageFile, 'Failed to parse API response');
+        console.error('Response status:', response.status);
+        return createFallbackResponse(imageFile, `Failed to parse API response: ${e instanceof Error ? e.message : 'Unknown error'}`);
       }
 
       // Check if the response contains the proper analysis data
@@ -128,7 +165,13 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
       return formattedResponse;
       
     } catch (error) {
-      console.error('Error communicating with API:', error);
+      console.error('Error communicating with Edge Function:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       return createFallbackResponse(imageFile, 
         `Communication error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
