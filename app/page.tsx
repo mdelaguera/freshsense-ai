@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FoodFreshnessResults } from "@/components/food-freshness-results"
+import { EnhancedFoodResults } from "@/components/enhanced-food-results"
 import { ImageUpload } from "@/components/image-upload"
 import { ProtectedRoute } from "@/components/protected-route"
 import { UserMenu } from "@/components/user-menu"
@@ -75,7 +75,16 @@ export default function Home() {
       } else {
         trackAnalysisComplete(results.identified_food, results.assessment_confidence, duration)
         trackUserJourney('analysis_complete_success')
-        toast.success(`Analysis complete: ${results.identified_food} identified!`)
+        
+        // Enhanced success message based on food category
+        let successMessage = `Analysis complete: ${results.identified_food} identified!`
+        if (results.food_category === 'raw' && results.recipe_suggestions?.length > 0) {
+          successMessage += ` Found ${results.recipe_suggestions.length} recipe suggestions.`
+        } else if (results.food_category === 'cooking' && results.cooking_stage) {
+          successMessage += ` Cooking stage: ${results.cooking_stage}.`
+        }
+        
+        toast.success(successMessage)
         setAnalysisResults(results)
         setShowResults(true)
       }
@@ -125,7 +134,11 @@ export default function Home() {
       <main className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100 py-4 sm:py-8">
         <div className="container mx-auto px-4">
         {showResults && analysisResults ? (
-          <FoodFreshnessResults data={formatResultsForDisplay()} onBack={handleBack} />
+          <EnhancedFoodResults 
+            data={analysisResults} 
+            imageUrl={imagePreview || "/placeholder.svg?height=400&width=400"} 
+            onBack={handleBack} 
+          />
         ) : (
           <div className="w-full max-w-md mx-auto">
             {/* Header with User Menu */}

@@ -27,14 +27,31 @@ export interface FoodAnalysisResult {
   timestamp: string;
   image_source: string;
   identified_food: string;
+  food_category: 'raw' | 'cooking' | 'cooked' | 'processed' | string;
   visual_assessment: 'Good' | 'Fair - Use Soon' | 'Poor - Use Immediately' | 'Inedible - Discard Immediately' | 'Very Fresh' | string;
   key_visual_indicators: string;
   estimated_remaining_freshness_days: string;
   assessment_confidence: 'Low' | 'Medium' | 'High' | string;
   disclaimer: string;
   user_verification_notes: string;
+  // New fields for cooking analysis
+  cooking_stage?: 'rare' | 'medium-rare' | 'medium' | 'medium-well' | 'well-done' | 'raw' | 'undercooked' | 'perfectly-cooked' | 'overcooked' | string;
+  cooking_recommendations?: string;
+  internal_temperature_guidance?: string;
+  // New fields for recipe suggestions
+  recipe_suggestions?: RecipeSuggestion[];
+  preparation_tips?: string;
   error?: string;
   raw_response?: Record<string, unknown>; // For debugging purposes
+}
+
+export interface RecipeSuggestion {
+  name: string;
+  cooking_method: string;
+  estimated_time: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  brief_description: string;
+  key_ingredients?: string[];
 }
 
 /**
@@ -62,12 +79,18 @@ function createFallbackResponse(imageFile: File, error?: string): FoodAnalysisRe
     timestamp: new Date().toISOString(),
     image_source: imageFile.name,
     identified_food: 'Unknown Food',
+    food_category: 'processed',
     visual_assessment: 'Unable to determine',
     key_visual_indicators: 'Analysis service unavailable',
     estimated_remaining_freshness_days: '0',
     assessment_confidence: 'Low',
     disclaimer: 'DISCLAIMER: Analysis service is currently unavailable. Please try again later.',
     user_verification_notes: '',
+    cooking_stage: undefined,
+    cooking_recommendations: undefined,
+    internal_temperature_guidance: undefined,
+    recipe_suggestions: [],
+    preparation_tips: undefined,
     error: error,
     raw_response: { serviceUnavailable: true }
   };
@@ -184,12 +207,18 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
         timestamp: new Date().toISOString(),
         image_source: imageFile.name,
         identified_food: responseData.identified_food || 'Unknown',
+        food_category: responseData.food_category || 'processed',
         visual_assessment: responseData.visual_assessment || 'Unable to determine',
         key_visual_indicators: responseData.key_visual_indicators || 'No indicators provided',
         estimated_remaining_freshness_days: responseData.estimated_remaining_freshness_days || 'Unknown',
         assessment_confidence: responseData.assessment_confidence || 'Low',
         disclaimer: 'DISCLAIMER: This is an automated analysis and should not be the sole basis for food safety decisions.',
         user_verification_notes: responseData.user_verification_notes || '',
+        cooking_stage: responseData.cooking_stage || undefined,
+        cooking_recommendations: responseData.cooking_recommendations || undefined,
+        internal_temperature_guidance: responseData.internal_temperature_guidance || undefined,
+        recipe_suggestions: responseData.recipe_suggestions || [],
+        preparation_tips: responseData.preparation_tips || undefined,
         raw_response: responseData
       };
       

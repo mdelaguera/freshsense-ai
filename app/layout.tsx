@@ -3,6 +3,7 @@ import './globals.css'
 import { Toaster } from 'sonner'
 import { AnalyticsProvider } from '@/components/analytics-provider'
 import { AuthProvider } from '@/contexts/auth-context'
+import { AppHeader } from '@/components/app-header'
 
 export const metadata: Metadata = {
   title: 'FreshSense - AI Food Freshness Analyzer',
@@ -23,10 +24,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen bg-gradient-to-br from-fresh-green/10 via-white to-sky-50 text-neutral-900 antialiased">
         <AuthProvider>
           <AnalyticsProvider>
-            {children}
+            <AppHeader />
+            <main className="min-h-[calc(100vh-80px)] w-full max-w-7xl mx-auto px-4 py-8">
+              {children}
+            </main>
           </AnalyticsProvider>
         </AuthProvider>
         <Toaster position="top-center" richColors />

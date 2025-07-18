@@ -1,0 +1,34 @@
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuLink } from "@/components/ui/navigation-menu";
+
+export function AppHeader() {
+  return (
+    <header className="w-full bg-gradient-to-b from-fresh-green/80 via-white to-transparent shadow-sm border-b border-green-100">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
+        <Link href="/" className="flex items-center gap-2" aria-label="FreshSense Home">
+          <span className="inline-block align-middle">
+            <Image src="/placeholder-logo.svg" alt="FreshSense Logo" width={44} height={44} priority />
+          </span>
+          <span className="text-2xl font-extrabold tracking-tight text-fresh-green">FreshSense</span>
+        </Link>
+        <nav className="hidden md:block">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink href="/analyze" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Analyze</NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink href="/dashboard" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Dashboard</NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink href="/" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Home</NavigationMenuLink>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        </nav>
+      </div>
+    </header>
+  );
+}

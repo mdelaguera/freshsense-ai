@@ -52,18 +52,39 @@ serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `Analyze this food image for freshness and return ONLY a JSON object with this exact structure:
+                text: `Analyze this food image comprehensively and return ONLY a JSON object with this exact structure:
 {
   "identified_food": "specific food item name",
+  "food_category": "raw" | "cooking" | "cooked" | "processed",
   "visual_assessment": "Good" | "Fair - Use Soon" | "Poor - Use Immediately" | "Inedible - Discard Immediately",
   "key_visual_indicators": "detailed description of visual signs observed",
   "estimated_remaining_freshness_days": "number as string",
   "assessment_confidence": "High" | "Medium" | "Low",
   "user_verification_notes": "specific recommendations for the user",
-  "safety_warning": "any food safety concerns if applicable"
+  "safety_warning": "any food safety concerns if applicable",
+  "cooking_stage": "if cooking/grilling: rare|medium-rare|medium|medium-well|well-done|undercooked|perfectly-cooked|overcooked, else null",
+  "cooking_recommendations": "if cooking: specific advice on doneness, temperature, timing, else null",
+  "internal_temperature_guidance": "if meat/protein: safe internal temperatures and tips, else null",
+  "recipe_suggestions": [
+    {
+      "name": "recipe name",
+      "cooking_method": "grilling|roasting|pan-searing|etc",
+      "estimated_time": "time estimate",
+      "difficulty": "Easy|Medium|Hard",
+      "brief_description": "short description",
+      "key_ingredients": ["ingredient1", "ingredient2"]
+    }
+  ],
+  "preparation_tips": "if raw food: preparation and handling advice, else null"
 }
 
-Focus on visual indicators like color changes, texture, mold, bruising, wilting, or other signs of spoilage. Be specific about what you observe. Return ONLY the JSON object, no other text.`
+ANALYSIS GUIDELINES:
+1. For RAW FOODS: Focus on freshness, provide 3-5 recipe suggestions, preparation tips
+2. For COOKING/GRILLING: Assess doneness stage, provide cooking recommendations, temperature guidance
+3. For COOKED FOODS: Assess freshness and reheating safety
+4. For PROCESSED FOODS: Check expiration signs, storage recommendations
+
+Be specific about what you observe. Return ONLY the JSON object, no other text.`
               },
               {
                 type: 'image_url',
@@ -127,12 +148,18 @@ Focus on visual indicators like color changes, texture, mold, bruising, wilting,
       // Validate required fields and provide defaults
       analysisResult = {
         identified_food: analysisResult.identified_food || 'Unknown Food',
+        food_category: analysisResult.food_category || 'processed',
         visual_assessment: analysisResult.visual_assessment || 'Unable to determine',
         key_visual_indicators: analysisResult.key_visual_indicators || 'No specific indicators observed',
         estimated_remaining_freshness_days: analysisResult.estimated_remaining_freshness_days || '0',
         assessment_confidence: analysisResult.assessment_confidence || 'Low',
         user_verification_notes: analysisResult.user_verification_notes || '',
-        safety_warning: analysisResult.safety_warning || ''
+        safety_warning: analysisResult.safety_warning || '',
+        cooking_stage: analysisResult.cooking_stage || null,
+        cooking_recommendations: analysisResult.cooking_recommendations || null,
+        internal_temperature_guidance: analysisResult.internal_temperature_guidance || null,
+        recipe_suggestions: analysisResult.recipe_suggestions || [],
+        preparation_tips: analysisResult.preparation_tips || null
       }
       
     } catch (parseError) {
@@ -142,12 +169,18 @@ Focus on visual indicators like color changes, texture, mold, bruising, wilting,
       // Return a structured fallback response instead of an error
       analysisResult = {
         identified_food: 'Unknown Food',
+        food_category: 'processed',
         visual_assessment: 'Unable to determine',
         key_visual_indicators: 'AI analysis failed - unable to parse response',
         estimated_remaining_freshness_days: '0',
         assessment_confidence: 'Low',
         user_verification_notes: 'Please try uploading the image again',
-        safety_warning: 'Manual inspection recommended'
+        safety_warning: 'Manual inspection recommended',
+        cooking_stage: null,
+        cooking_recommendations: null,
+        internal_temperature_guidance: null,
+        recipe_suggestions: [],
+        preparation_tips: null
       }
     }
 
