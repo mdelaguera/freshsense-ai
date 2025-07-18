@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Camera, Upload, X, AlertCircle } from "lucide-react"
+import { Camera, Upload, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import Image from "next/image"

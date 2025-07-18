@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ImageUpload } from "@/components/image-upload"
-import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
+import { analyzeFoodImage } from "@/lib/api"
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 

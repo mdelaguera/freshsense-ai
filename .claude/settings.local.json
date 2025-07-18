@@ -18,7 +18,13 @@
       "Bash(git commit:*)",
       "Bash(supabase:*)",
       "Bash(npm run dev:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "WebFetch(domain:pro.magicui.design)",
+      "WebFetch(domain:agent-magicui.vercel.app)",
+      "Bash(vercel:*)",
+      "Bash(npm run lint)",
+      "WebFetch(domain:freshsense-ai.vercel.app)"
     ],
     "deny": []
   }

@@ -8,6 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // Database types for food analyses
 export interface FoodAnalysis {
   id: string
+  user_id: string
   identified_food: string
   visual_assessment: 'Good' | 'Poor - Use Immediately' | 'Inedible - Discard Immediately'
   key_visual_indicators?: string

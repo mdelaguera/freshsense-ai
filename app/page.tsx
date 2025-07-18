@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { FoodFreshnessResults } from "@/components/food-freshness-results"
 import { ImageUpload } from "@/components/image-upload"
+import { ProtectedRoute } from "@/components/protected-route"
+import { UserMenu } from "@/components/user-menu"
 import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
 import { trackImageUpload, trackAnalysisRequest, trackAnalysisComplete, trackAnalysisError, trackUserJourney } from "@/lib/analytics"
 import { Loader2, Leaf, Scan } from "lucide-react"
@@ -119,22 +121,29 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100 py-4 sm:py-8">
-      <div className="container mx-auto px-4">
+    <ProtectedRoute>
+      <main className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100 py-4 sm:py-8">
+        <div className="container mx-auto px-4">
         {showResults && analysisResults ? (
           <FoodFreshnessResults data={formatResultsForDisplay()} onBack={handleBack} />
         ) : (
           <div className="w-full max-w-md mx-auto">
-            <div className="text-center mb-4 sm:mb-8">
-              <div className="flex items-center justify-center mb-4">
-                <div className="relative">
-                  <Leaf className="h-8 w-8 text-fresh-green-600 mr-3" />
-                  <Scan className="h-4 w-4 text-fresh-green-500 absolute -top-1 -right-1" />
+            {/* Header with User Menu */}
+            <div className="flex justify-between items-start mb-4 sm:mb-8">
+              <div className="text-center flex-1">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <Leaf className="h-8 w-8 text-fresh-green-600 mr-3" />
+                    <Scan className="h-4 w-4 text-fresh-green-500 absolute -top-1 -right-1" />
+                  </div>
                 </div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-fresh-green-600">FreshSense</h1>
+                <p className="text-muted-foreground mt-1 sm:mt-2">AI-Powered Food Freshness Analyzer</p>
+                <p className="text-xs text-fresh-green-600 mt-1">Reduce waste • Save money • Stay healthy</p>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-fresh-green-600">FreshSense</h1>
-              <p className="text-muted-foreground mt-1 sm:mt-2">AI-Powered Food Freshness Analyzer</p>
-              <p className="text-xs text-fresh-green-600 mt-1">Reduce waste • Save money • Stay healthy</p>
+              <div className="absolute top-4 right-4">
+                <UserMenu />
+              </div>
             </div>
             <Card className="w-full">
               <CardHeader className="px-4 py-3 sm:p-6">
@@ -168,7 +177,8 @@ export default function Home() {
             </Card>
           </div>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </ProtectedRoute>
   )
 }

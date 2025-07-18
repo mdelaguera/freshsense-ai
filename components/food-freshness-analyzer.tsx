@@ -10,21 +10,18 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 
 type AnalysisState = "idle" | "loading" | "results" | "error"
 
-interface AnalysisResponse {
-  identifiedFood: string
-  visualAssessment: string
-  keyIndicators: string
-  estimatedFreshnessDays: string
-  confidence: string
-  importantDisclaimer: string
-  error?: string
-}
 
 export function FoodFreshnessAnalyzer() {
   const [image, setImage] = useState<string | null>(null)
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle")
   const [errorMessage, setErrorMessage] = useState<string>("")
-  const [results, setResults] = useState<any>(null)
+  const [results, setResults] = useState<{
+    identifiedFood: string;
+    visualAssessment: string;
+    keyVisualIndicators: string;
+    estimatedRemainingFreshness: number;
+    assessmentConfidence: string;
+  } | null>(null)
 
   const handleImageUpload = (imageDataUrl: string) => {
     setImage(imageDataUrl)
@@ -106,51 +103,6 @@ export function FoodFreshnessAnalyzer() {
     return parseInt(daysString, 10) || 0
   }
 
-  // Helper function to generate realistic mock data for testing when n8n is unavailable
-  const generateMockAnalysisData = (imageData: string) => {
-    // Determine a pseudo-random but consistent food type based on the image data
-    const hash = imageData.length % 5 // Simple hash using image length
-    
-    const foods = [
-      {
-        identifiedFood: "Fresh Tomato",
-        visualAssessment: "Good",
-        keyVisualIndicators: "Bright red color, firm skin, no visible blemishes",
-        estimatedRemainingFreshness: 5,
-        assessmentConfidence: "High"
-      },
-      {
-        identifiedFood: "Chicken Breast",
-        visualAssessment: "Good",
-        keyVisualIndicators: "Pink color, no discoloration, appears fresh",
-        estimatedRemainingFreshness: 2,
-        assessmentConfidence: "Medium"
-      },
-      {
-        identifiedFood: "Leafy Greens",
-        visualAssessment: "Good",
-        keyVisualIndicators: "Vibrant green color, no wilting, crisp appearance",
-        estimatedRemainingFreshness: 4,
-        assessmentConfidence: "High"
-      },
-      {
-        identifiedFood: "Ground Beef",
-        visualAssessment: "Good",
-        keyVisualIndicators: "Red color with some pink, minimal browning",
-        estimatedRemainingFreshness: 2,
-        assessmentConfidence: "Medium"
-      },
-      {
-        identifiedFood: "Apple",
-        visualAssessment: "Good",
-        keyVisualIndicators: "Bright color, firm skin, no bruising",
-        estimatedRemainingFreshness: 7,
-        assessmentConfidence: "High"
-      }
-    ]
-    
-    return foods[hash]
-  }
 
   const handleReset = () => {
     setImage(null)

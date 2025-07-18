@@ -3,7 +3,7 @@
  */
 
 import ReactGA from 'react-ga4';
-import * as Sentry from '@sentry/nextjs';
+// import * as Sentry from '@sentry/nextjs'; // Temporarily disabled for troubleshooting
 
 // GA4 Measurement ID - replace with actual ID when available
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-PLACEHOLDER';
@@ -76,54 +76,56 @@ export const trackEngagement = (engagementType: string, duration?: number) => {
   trackEvent('engagement', 'user_behavior', engagementType, duration);
 };
 
-// Sentry Error Tracking Functions
-export const reportError = (error: Error, context?: Record<string, any>) => {
-  console.error('Error reported to Sentry:', error, context);
+// Sentry Error Tracking Functions (temporarily disabled)
+export const reportError = (error: Error, context?: Record<string, unknown>) => {
+  console.error('Error reported (Sentry disabled):', error, context);
   
   // Set additional context
   if (context) {
-    Sentry.setContext('error_context', context);
+    // Sentry.setContext('error_context', context); // Temporarily disabled
   }
   
   // Report to Sentry
-  Sentry.captureException(error);
+  // Sentry.captureException(error); // Temporarily disabled
   
   // Also track in Google Analytics
   trackEvent('error_occurred', 'system_error', error.message);
 };
 
-export const reportMessage = (message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, any>) => {
-  console.log(`Sentry message (${level}):`, message, context);
+export const reportMessage = (message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, unknown>) => {
+  console.log(`Message (${level}):`, message, context);
   
   // Set additional context
   if (context) {
-    Sentry.setContext('message_context', context);
+    // Sentry.setContext('message_context', context); // Temporarily disabled
   }
   
   // Report to Sentry
-  Sentry.captureMessage(message, level);
+  // Sentry.captureMessage(message, level); // Temporarily disabled
 };
 
-export const setUserContext = (userId?: string, email?: string, additionalData?: Record<string, any>) => {
-  Sentry.setUser({
-    id: userId,
-    email: email,
-    ...additionalData
-  });
+export const setUserContext = (userId?: string, email?: string, additionalData?: Record<string, unknown>) => {
+  // Sentry.setUser({
+  //   id: userId,
+  //   email: email,
+  //   ...additionalData
+  // }); // Temporarily disabled
+  console.log('User context set:', { userId, email, additionalData });
 };
 
-export const addBreadcrumb = (message: string, category: string, level: 'info' | 'warning' | 'error' = 'info', data?: Record<string, any>) => {
-  Sentry.addBreadcrumb({
-    message,
-    category,
-    level,
-    data,
-    timestamp: Date.now() / 1000,
-  });
+export const addBreadcrumb = (message: string, category: string, level: 'info' | 'warning' | 'error' = 'info', data?: Record<string, unknown>) => {
+  // Sentry.addBreadcrumb({
+  //   message,
+  //   category,
+  //   level,
+  //   data,
+  //   timestamp: Date.now() / 1000,
+  // }); // Temporarily disabled
+  console.log('Breadcrumb:', { message, category, level, data });
 };
 
 // Enhanced error tracking for specific FreshSense operations
-export const reportApiError = (endpoint: string, error: Error, requestData?: any) => {
+export const reportApiError = (endpoint: string, error: Error, requestData?: unknown) => {
   addBreadcrumb(`API Error: ${endpoint}`, 'api', 'error', {
     endpoint,
     requestData: requestData ? JSON.stringify(requestData).substring(0, 500) : undefined
@@ -145,7 +147,7 @@ export const reportImageProcessingError = (fileInfo: { name: string, size: numbe
   });
 };
 
-export const reportWebhookError = (webhookUrl: string, error: Error, payload?: any) => {
+export const reportWebhookError = (webhookUrl: string, error: Error, payload?: unknown) => {
   addBreadcrumb(`Webhook Error: ${webhookUrl}`, 'webhook', 'error');
   
   reportError(error, {
