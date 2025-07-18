@@ -125,8 +125,8 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
         });
 
         // If Supabase Edge Function fails, try Next.js API route as fallback
-        if (!response.ok && response.status === 404) {
-          console.log('Supabase Edge Function not found, trying Next.js API route fallback');
+        if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403 || response.status === 500)) {
+          console.log(`Supabase Edge Function failed with ${response.status}: ${response.statusText}, trying Next.js API route fallback`);
           const fallbackEndpoint = '/api/analyze';
           response = await fetch(fallbackEndpoint, {
             method: 'POST',
