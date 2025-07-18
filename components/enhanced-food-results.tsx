@@ -17,9 +17,13 @@ import {
   Utensils,
   Timer,
   Users,
-  Star
+  Star,
+  ExternalLink,
+  ShoppingCart,
+  Package
 } from "lucide-react"
 import { FoodAnalysisResult, RecipeSuggestion } from "@/lib/api"
+import { generateIngredientLinks, generateShoppingCartLink, trackAffiliateClick } from "@/lib/affiliate-links"
 
 interface EnhancedFoodResultsProps {
   data: FoodAnalysisResult
@@ -29,6 +33,18 @@ interface EnhancedFoodResultsProps {
 
 export function EnhancedFoodResults({ data, imageUrl, onBack }: EnhancedFoodResultsProps) {
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeSuggestion | null>(null)
+
+  const handleAffiliateClick = (ingredient: string, linkUrl: string, category: string) => {
+    const linkType = linkUrl.includes('fresh') ? 'amazon-fresh' : 'amazon'
+    trackAffiliateClick(ingredient, linkType)
+    window.open(linkUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleShopAllIngredients = (ingredients: string[]) => {
+    const shoppingUrl = generateShoppingCartLink(ingredients)
+    trackAffiliateClick(`bulk_ingredients_${ingredients.length}`, 'amazon-fresh')
+    window.open(shoppingUrl, '_blank', 'noopener,noreferrer')
+  }
 
   const getAssessmentColor = (assessment: string) => {
     switch (assessment.toLowerCase()) {
@@ -253,6 +269,43 @@ export function EnhancedFoodResults({ data, imageUrl, onBack }: EnhancedFoodResu
                     </div>
                   </div>
 
+                  {/* Quick Shopping Section */}
+                  {data.recipe_suggestions && data.recipe_suggestions.length > 0 && (
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <ShoppingCart className="h-4 w-4" />
+                        Quick Shopping
+                      </h4>
+                      <div className="space-y-2">
+                        {data.recipe_suggestions.map((recipe, index) => (
+                          recipe.key_ingredients && recipe.key_ingredients.length > 0 && (
+                            <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+                              <div>
+                                <p className="font-medium text-sm">{recipe.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {recipe.key_ingredients.slice(0, 3).join(', ')}
+                                  {recipe.key_ingredients.length > 3 && ` +${recipe.key_ingredients.length - 3} more`}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleShopAllIngredients(recipe.key_ingredients!)}
+                                className="flex items-center gap-1"
+                              >
+                                <ShoppingCart className="h-3 w-3" />
+                                Shop
+                              </Button>
+                            </div>
+                          )
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
+                        🛒 Click any recipe to see individual ingredient links
+                      </p>
+                    </div>
+                  )}
+
                   {data.preparation_tips && (
                     <div>
                       <h4 className="font-medium mb-2">Preparation Tips</h4>
@@ -316,12 +369,45 @@ export function EnhancedFoodResults({ data, imageUrl, onBack }: EnhancedFoodResu
               
               {selectedRecipe.key_ingredients && selectedRecipe.key_ingredients.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">Key Ingredients</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRecipe.key_ingredients.map((ingredient, index) => (
-                      <Badge key={index} variant="secondary">{ingredient}</Badge>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium">Key Ingredients</h4>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleShopAllIngredients(selectedRecipe.key_ingredients!)}
+                      className="flex items-center gap-2"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      Shop All
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {generateIngredientLinks(selectedRecipe.key_ingredients).map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 rounded-lg border bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm font-medium">{item.name}</span>
+                          {item.isFresh && (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                              Fresh
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAffiliateClick(item.name, item.affiliateLink, item.category)}
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                        >
+                          <span className="text-xs">Shop</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    💡 Shop ingredients with Amazon Fresh for same-day delivery
+                  </p>
                 </div>
               )}
             </div>
