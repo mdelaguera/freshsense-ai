@@ -4,25 +4,31 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Dialog } from "@/components/ui/dialog";
-import { toast } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/use-toast";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface FilePreview {
   file: File;
   url: string;
   error?: string;
+  originalSize?: number;
+  compressedSize?: number;
 }
 
 interface AnalyzerUploadZoneProps {
   onFilesAccepted?: (files: File[]) => void;
   maxFiles?: number;
   maxSizeMB?: number;
+  maxDimension?: number; // Maximum width/height in pixels
   accept?: string;
 }
 
 export const AnalyzerUploadZone: React.FC<AnalyzerUploadZoneProps> = ({
   onFilesAccepted,
   maxFiles = 5,
-  maxSizeMB = 10,
+  maxSizeMB = 5, // Reduced to 5MB to prevent timeouts
+  maxDimension = 1200, // Max width/height of 1200px
   accept = "image/*",
 }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -30,45 +36,200 @@ export const AnalyzerUploadZone: React.FC<AnalyzerUploadZoneProps> = ({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
-  const validateFiles = (files: FileList): FilePreview[] => {
+  const validateFiles = async (files: FileList): Promise<FilePreview[]> => {
     const previews: FilePreview[] = [];
-    Array.from(files).forEach((file) => {
+    const filePromises = Array.from(files).map(async (file) => {
       let error = "";
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        error = `File too large (> ${maxSizeMB}MB)`;
-      } else if (!file.type.startsWith("image/")) {
+      let processedFile = file;
+      let originalSize = file.size;
+      let compressedSize = file.size;
+      
+      if (!file.type.startsWith("image/")) {
         error = "Invalid file type";
+        return {
+          file,
+          url: URL.createObjectURL(file),
+          error,
+          originalSize,
+          compressedSize
+        };
       }
-      previews.push({
-        file,
-        url: URL.createObjectURL(file),
+
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        // Image is too large, we'll try to resize it
+        try {
+          processedFile = await resizeImage(file, maxDimension, maxSizeMB * 1024 * 1024);
+          compressedSize = processedFile.size;
+          
+          if (processedFile.size > maxSizeMB * 1024 * 1024) {
+            error = `Image still too large after compression (${(processedFile.size / (1024 * 1024)).toFixed(1)}MB). Please try a smaller image.`;
+          }
+        } catch (e) {
+          error = `Failed to process image. Please use a smaller image under ${maxSizeMB}MB.`;
+        }
+      }
+
+      return {
+        file: error ? file : processedFile, // Use original file only if there's an error
+        url: URL.createObjectURL(error ? file : processedFile),
         error,
-      });
+        originalSize,
+        compressedSize
+      };
     });
-    return previews;
+
+    return await Promise.all(filePromises);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  // Function to resize images to prevent timeout errors
+  const resizeImage = (file: File, maxDimension: number, maxSize: number): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          // Calculate dimensions to maintain aspect ratio
+          let width = img.width;
+          let height = img.height;
+          let quality = 0.8; // Initial quality
+          
+          // Resize if needed
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Try different quality settings until file size is under maxSize
+          const tryCompress = (q: number) => {
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error('Failed to create blob'));
+                  return;
+                }
+                
+                const newFile = new File(
+                  [blob],
+                  file.name.replace(/\.[^\.]+$/, '.jpg'), // Convert to jpg for better compression
+                  { type: 'image/jpeg' }
+                );
+                
+                // If still too large and quality can be reduced further, try again
+                if (newFile.size > maxSize && q > 0.3) {
+                  tryCompress(q - 0.1); // Reduce quality and try again
+                } else {
+                  resolve(newFile); // Return the compressed file
+                }
+              },
+              'image/jpeg',
+              q
+            );
+          };
+          
+          // Start compression attempt
+          tryCompress(quality);
+        };
+        img.onerror = () => {
+          reject(new Error('Failed to load image'));
+        };
+      };
+      reader.onerror = () => {
+        reject(new Error('Failed to read file'));
+      };
+    });
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
     const files = e.dataTransfer.files;
     if (!files.length) return;
-    const previews = validateFiles(files);
-    setPreviews(previews);
-    const validFiles = previews.filter((p) => !p.error).map((p) => p.file);
-    if (validFiles.length && onFilesAccepted) onFilesAccepted(validFiles);
-    if (previews.some((p) => p.error)) toast({ title: "Some files were invalid." });
+    
+    setUploading(true);
+    setProgress(10);
+    
+    try {
+      const previews = await validateFiles(files);
+      setProgress(70);
+      setPreviews(previews);
+      
+      const validFiles = previews.filter((p) => !p.error).map((p) => p.file);
+      setProgress(100);
+      
+      if (validFiles.length && onFilesAccepted) {
+        onFilesAccepted(validFiles);
+      }
+      
+      if (previews.some((p) => p.error)) {
+        toast({ 
+          title: "Some files were invalid or too large", 
+          description: "Please check the error messages and try again with smaller images."
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Failed to process images", 
+        description: "Please try again with smaller images."
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const previews = validateFiles(files);
-    setPreviews(previews);
-    const validFiles = previews.filter((p) => !p.error).map((p) => p.file);
-    if (validFiles.length && onFilesAccepted) onFilesAccepted(validFiles);
-    if (previews.some((p) => p.error)) toast({ title: "Some files were invalid." });
+    
+    setUploading(true);
+    setProgress(10);
+    
+    try {
+      const previews = await validateFiles(files);
+      setProgress(70);
+      setPreviews(previews);
+      
+      const validFiles = previews.filter((p) => !p.error).map((p) => p.file);
+      setProgress(100);
+      
+      if (validFiles.length && onFilesAccepted) {
+        onFilesAccepted(validFiles);
+      }
+      
+      if (previews.some((p) => p.error)) {
+        toast({ 
+          title: "Some files were invalid or too large", 
+          description: "Please check the error messages and try again with smaller images."
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "Failed to process images", 
+        description: "Please try again with smaller images."
+      });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const openFileDialog = () => {
@@ -118,7 +279,15 @@ export const AnalyzerUploadZone: React.FC<AnalyzerUploadZoneProps> = ({
         >
           Click to upload or drag files here
         </Button>
-        <span className="text-sm text-text-secondary mt-2">JPG, PNG, WebP. Max {maxSizeMB}MB each.</span>
+        <span className="text-sm text-text-secondary mt-2">JPG, PNG, WebP. Max {maxSizeMB}MB each. Larger images will be automatically resized.</span>
+        
+        <Alert className="mt-4 bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Image Size Limit</AlertTitle>
+          <AlertDescription>
+            Very large images may cause timeout errors during analysis. Images larger than {maxSizeMB}MB will be automatically compressed, but for best results, please use images under {maxSizeMB}MB.
+          </AlertDescription>
+        </Alert>
         {previews.length > 0 && (
           <div className="grid grid-cols-2 gap-2 w-full mt-4">
             {previews.map((preview, idx) => (
@@ -131,6 +300,11 @@ export const AnalyzerUploadZone: React.FC<AnalyzerUploadZoneProps> = ({
                 {preview.error && (
                   <span className="absolute top-1 left-1 bg-danger-red text-white text-xs px-2 py-1 rounded">
                     {preview.error}
+                  </span>
+                )}
+                {preview.compressedSize && preview.originalSize && preview.compressedSize < preview.originalSize && !preview.error && (
+                  <span className="absolute top-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                    Resized ({(preview.compressedSize / (1024 * 1024)).toFixed(1)}MB)
                   </span>
                 )}
               </div>
