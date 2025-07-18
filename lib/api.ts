@@ -34,7 +34,7 @@ export interface FoodAnalysisResult {
   disclaimer: string;
   user_verification_notes: string;
   error?: string;
-  raw_response?: any; // For debugging purposes
+  raw_response?: Record<string, unknown>; // For debugging purposes
 }
 
 /**
@@ -110,9 +110,10 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
+      let response; // Declare response variable in outer scope
       try {
         // Try Supabase Edge Function first
-        let response = await fetch(API_ANALYZE_ENDPOINT, {
+        response = await fetch(API_ANALYZE_ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -145,6 +146,11 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
           return createFallbackResponse(imageFile, 'Request timed out - please try again with a smaller image');
         }
         throw fetchError;
+      }
+
+      // Check if response was successful
+      if (!response) {
+        return createFallbackResponse(imageFile, 'Failed to get response from any API endpoint');
       }
 
       // Always attempt to parse the response as JSON
