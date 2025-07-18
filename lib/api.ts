@@ -105,22 +105,47 @@ export async function analyzeFoodImage(imageFile: File): Promise<FoodAnalysisRes
     
     try {
       console.log('About to fetch:', API_ANALYZE_ENDPOINT);
-      console.log('Headers:', {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY?.substring(0, 20)}...`,
-        'apikey': SUPABASE_ANON_KEY?.substring(0, 20) + '...'
-      });
       
-      // Send directly to Supabase Edge Function
-      const response = await fetch(API_ANALYZE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'apikey': SUPABASE_ANON_KEY
-        },
-        body: JSON.stringify(payload)
-      });
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      try {
+        // Try Supabase Edge Function first
+        let response = await fetch(API_ANALYZE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        // If Supabase Edge Function fails, try Next.js API route as fallback
+        if (!response.ok && response.status === 404) {
+          console.log('Supabase Edge Function not found, trying Next.js API route fallback');
+          const fallbackEndpoint = '/api/analyze';
+          response = await fetch(fallbackEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+        }
+
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.error('Request timed out after 30 seconds');
+          return createFallbackResponse(imageFile, 'Request timed out - please try again with a smaller image');
+        }
+        throw fetchError;
+      }
 
       // Always attempt to parse the response as JSON
       let responseData;

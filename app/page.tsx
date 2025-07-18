@@ -16,6 +16,7 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResults, setAnalysisResults] = useState<FoodAnalysisResult | null>(null)
+  const [progressMessage, setProgressMessage] = useState<string>("")
 
   const handleImageSelected = (file: File) => {
     setSelectedImage(file)
@@ -35,6 +36,7 @@ export default function Home() {
     }
 
     setIsAnalyzing(true)
+    setProgressMessage("Preparing image for analysis...")
     const startTime = Date.now()
     
     // Track analysis request
@@ -42,8 +44,13 @@ export default function Home() {
     trackUserJourney('analysis_started')
     
     try {
-      toast.info("Remember to activate the test webhook in n8n before sending the image!");
-      toast.info("Sending image to analysis service...");
+      setProgressMessage("Sending to AI analysis service...")
+      toast.info("Analyzing your food image...");
+      
+      // Add a small delay to show progress message
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setProgressMessage("AI is examining the image...")
+      
       const results = await analyzeFoodImage(selectedImage)
       const duration = Date.now() - startTime
       
@@ -76,6 +83,7 @@ export default function Home() {
       console.error("Analysis error:", error)
     } finally {
       setIsAnalyzing(false)
+      setProgressMessage("")
     }
   }
 
@@ -145,12 +153,17 @@ export default function Home() {
                   {isAnalyzing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Analyzing...
+                      {progressMessage || "Analyzing..."}
                     </>
                   ) : (
                     "Analyze Food Freshness"
                   )}
                 </Button>
+                {isAnalyzing && (
+                  <div className="text-center text-sm text-muted-foreground mt-2">
+                    <p>This may take up to 30 seconds...</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
