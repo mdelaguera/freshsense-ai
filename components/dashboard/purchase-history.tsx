@@ -37,9 +37,9 @@ export function PurchaseHistory() {
       orderNumber: "AF-2024-001",
       date: "2024-07-20",
       items: [
-        { name: "Fresh Strawberries", quantity: 2, price: 5.99, imageUrl: "/api/placeholder/50/50" },
-        { name: "Organic Spinach", quantity: 1, price: 3.49, imageUrl: "/api/placeholder/50/50" },
-        { name: "Feta Cheese", quantity: 1, price: 4.99, imageUrl: "/api/placeholder/50/50" }
+        { name: "Fresh Strawberries", quantity: 2, price: 5.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Organic Spinach", quantity: 1, price: 3.49, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Feta Cheese", quantity: 1, price: 4.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" }
       ],
       total: 14.47,
       status: "delivered",
@@ -51,9 +51,9 @@ export function PurchaseHistory() {
       orderNumber: "AF-2024-002",
       date: "2024-07-18",
       items: [
-        { name: "Bell Peppers (3-pack)", quantity: 1, price: 4.99, imageUrl: "/api/placeholder/50/50" },
-        { name: "Ground Turkey", quantity: 1, price: 6.99, imageUrl: "/api/placeholder/50/50" },
-        { name: "Brown Rice", quantity: 1, price: 2.99, imageUrl: "/api/placeholder/50/50" }
+        { name: "Bell Peppers (3-pack)", quantity: 1, price: 4.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Ground Turkey", quantity: 1, price: 6.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Brown Rice", quantity: 1, price: 2.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" }
       ],
       total: 14.97,
       status: "delivered",
@@ -65,9 +65,9 @@ export function PurchaseHistory() {
       orderNumber: "AF-2024-003",
       date: "2024-07-16",
       items: [
-        { name: "Bananas", quantity: 1, price: 1.99, imageUrl: "/api/placeholder/50/50" },
-        { name: "Whole Wheat Flour", quantity: 1, price: 3.79, imageUrl: "/api/placeholder/50/50" },
-        { name: "Eggs (12-pack)", quantity: 1, price: 3.99, imageUrl: "/api/placeholder/50/50" }
+        { name: "Bananas", quantity: 1, price: 1.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Whole Wheat Flour", quantity: 1, price: 3.79, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Eggs (12-pack)", quantity: 1, price: 3.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" }
       ],
       total: 9.77,
       status: "delivered",
@@ -79,8 +79,8 @@ export function PurchaseHistory() {
       orderNumber: "AF-2024-004",
       date: "2024-07-14",
       items: [
-        { name: "Avocados (2-pack)", quantity: 1, price: 3.99, imageUrl: "/api/placeholder/50/50" },
-        { name: "Cherry Tomatoes", quantity: 1, price: 4.49, imageUrl: "/api/placeholder/50/50" }
+        { name: "Avocados (2-pack)", quantity: 1, price: 3.99, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" },
+        { name: "Cherry Tomatoes", quantity: 1, price: 4.49, imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=50&h=50&fit=crop&crop=center" }
       ],
       total: 8.48,
       status: "processing",

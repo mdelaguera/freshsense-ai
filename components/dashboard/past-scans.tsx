@@ -36,7 +36,7 @@ export function PastScans() {
       freshness: "fresh",
       confidence: 94.2,
       remainingDays: 3,
-      imageUrl: "/api/placeholder/100/100",
+      imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=100&h=100&fit=crop&crop=center",
       recipesGenerated: 3,
       purchased: true
     },
@@ -47,7 +47,7 @@ export function PastScans() {
       freshness: "soon",
       confidence: 89.1,
       remainingDays: 1,
-      imageUrl: "/api/placeholder/100/100",
+      imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=100&h=100&fit=crop&crop=center",
       recipesGenerated: 2,
       purchased: false
     },
@@ -58,7 +58,7 @@ export function PastScans() {
       freshness: "fresh",
       confidence: 96.8,
       remainingDays: 5,
-      imageUrl: "/api/placeholder/100/100",
+      imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=100&h=100&fit=crop&crop=center",
       recipesGenerated: 4,
       purchased: true
     },
@@ -69,7 +69,7 @@ export function PastScans() {
       freshness: "spoiled",
       confidence: 91.5,
       remainingDays: 0,
-      imageUrl: "/api/placeholder/100/100",
+      imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=100&h=100&fit=crop&crop=center",
       recipesGenerated: 1,
       purchased: false
     },
@@ -80,7 +80,7 @@ export function PastScans() {
       freshness: "fresh",
       confidence: 88.3,
       remainingDays: 4,
-      imageUrl: "/api/placeholder/100/100",
+      imageUrl: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?w=100&h=100&fit=crop&crop=center",
       recipesGenerated: 3,
       purchased: true
     }
