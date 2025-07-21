@@ -69,3 +69,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Architecture Notes
 The project uses Supabase Edge Functions with OpenAI Vision API for food freshness analysis. The Flask backend is legacy and should be considered deprecated in favor of the Next.js + Supabase architecture.
+
+### Recent Updates (January 2025)
+- **Authentication Flow**: Login now required only at analysis submission, not page load
+- **Camera Functionality**: Proper WebRTC implementation using navigator.mediaDevices.getUserMedia API
+- **Responsive Navigation**: Mobile hamburger menu with slide-out panel
+- **Recipe System**: Complete recipe modal with Amazon affiliate integration (freshsense-20)
+- **Food Labeling**: User-driven AI training data collection system
+- **Admin Controls**: Restricted admin panel access to michael.delaguera@gmail.com
+- **Dashboard**: Comprehensive user dashboard with past scans, recipes, and purchase history
+- **Affiliate Integration**: Amazon Fresh and Amazon Associates with proper compliance
+
+### MVP Status
+✅ **Core Features Complete**:
+- Food freshness analysis with OpenAI Vision
+- Recipe generation from analyzed food
+- Amazon affiliate monetization
+- User authentication and dashboard
+- Admin panel with analytics
+- Food labeling for AI improvement
+- Responsive design with camera integration
+
+🚧 **In Progress**:
+- Recipe storage optimization
+- Advanced analytics integration
+- User activity tracking enhancements
+
+📋 **Planned**:
+- Multi-language support
+- Bulk food analysis
+- Meal planning integration
+- Social features and sharing
