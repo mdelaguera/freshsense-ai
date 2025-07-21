@@ -6,7 +6,7 @@ This document outlines the deployment process for the "It's Ready" application, 
 
 1. Next.js frontend deployed to Vercel
 2. Flask backend for image processing
-3. n8n webhook integration for food freshness analysis
+3. API integration for food freshness analysis
 
 ## Frontend Deployment
 
@@ -39,7 +39,7 @@ The backend requires the following environment variables:
 
 ```
 SECRET_KEY=your_secure_key
-N8N_WEBHOOK_URL=https://nuworld.app.n8n.cloud/webhook/667fdda4-da90-487e-9c38-0c7fa7b7dfd9
+API_ENDPOINT_URL=your_api_endpoint_url
 ```
 
 ### Deploying to Vercel

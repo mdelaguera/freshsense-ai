@@ -13,7 +13,6 @@
     }
   ],
   "env": {
-    "SECRET_KEY": "its_ready_secure_key_replace_in_production",
-    "N8N_WEBHOOK_URL": "https://nuworld.app.n8n.cloud/webhook/667fdda4-da90-487e-9c38-0c7fa7b7dfd9"
+    "SECRET_KEY": "its_ready_secure_key_replace_in_production"
   }
 }

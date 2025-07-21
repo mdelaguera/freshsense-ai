@@ -1,30 +1,29 @@
-# It's Ready - Webhook Documentation
+# It's Ready - API Documentation
 
 ## Overview
 
-This document provides detailed information about the webhooks used in the "It's Ready" food freshness analysis application. The application uses n8n webhooks to process food images and return freshness analysis results.
+This document provides detailed information about the API used in the "It's Ready" food freshness analysis application. The application uses a REST API to process food images and return freshness analysis results.
 
-## Webhook URLs
+## API Endpoints
 
-### Production Webhook
+### Production Endpoint
 ```
-https://nuworld.app.n8n.cloud/webhook/f9afe891-e6f7-4702-9348-7485bfad5c68
-```
-
-### Test Webhook
+https://api.example.com/analyze
 ```
 
-https://nuworld.app.n8n.cloud/webhook-test/f9afe891-e6f7-4702-9348-7485bfad5c68
+### Test Endpoint
+```
+https://api-test.example.com/analyze
 ```
 
 ## Implementation Details
 
 ### Request Format
 
-When sending images to the webhook, use the following format:
+When sending images to the API endpoint, use the following format:
 
 ```javascript
-// POST request to webhook URL
+// POST request to API endpoint
 {
   // Important: Include the full data URL format with the prefix
   "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEA...",
@@ -34,11 +33,11 @@ When sending images to the webhook, use the following format:
 }
 ```
 
-**Note**: n8n expects the image in complete data URL format (`data:image/jpeg;base64,...`) to properly recognize binary data. Do not strip the prefix.
+**Note**: The API expects the image in complete data URL format (`data:image/jpeg;base64,...`) to properly recognize binary data. Do not strip the prefix.
 
 ### Response Format
 
-The webhook will return the analysis results in the following format:
+The API will return the analysis results in the following format:
 
 ```javascript
 {
@@ -98,7 +97,7 @@ fileReader.readAsDataURL(imageFile);
 fileReader.onload = async () => {
   const base64Image = fileReader.result;
   
-  const response = await fetch("https://nuworld.app.n8n.cloud/webhook/667fdda4-da90-487e-9c38-0c7fa7b7dfd9", {
+  const response = await fetch("https://api.example.com/analyze", {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -119,24 +118,24 @@ fileReader.onload = async () => {
 
 ## CORS Considerations
 
-When integrating with n8n webhooks from a browser-based application, you may encounter Cross-Origin Resource Sharing (CORS) issues. This happens because browsers prevent web applications from making direct requests to domains different from the one hosting the application.
+When integrating with external APIs from a browser-based application, you may encounter Cross-Origin Resource Sharing (CORS) issues. This happens because browsers prevent web applications from making direct requests to domains different from the one hosting the application.
 
 ### CORS Solution
 
 To address CORS issues, we've implemented a proxy API route in our Next.js application:
 
 1. **Proxy API Route**: `/api/analyze`
-   - This route forwards requests to the n8n webhook
+   - This route forwards requests to the external API
    - Located at: `app/api/analyze/route.ts` 
    - Handles all error responses and logging
 
 ### Implementation Details
 
-Instead of calling the n8n webhook directly from the browser:
+Instead of calling the external API directly from the browser:
 
 ```javascript
 // DON'T do this from client-side code - will cause CORS errors
-fetch('https://nuworld.app.n8n.cloud/webhook/f9afe891-e6f7-4702-9348-7485bfad5c68', {...})
+fetch('https://api.example.com/analyze', {...})
 ```
 
 Use the proxy API route:
@@ -152,35 +151,35 @@ fetch('/api/analyze', {
 })
 ```
 
-This ensures all communication with the n8n webhook happens server-to-server, avoiding CORS restrictions.
+This ensures all communication with the external API happens server-to-server, avoiding CORS restrictions.
 
-## n8n Webhook Node Configuration
+## API Configuration
 
-### Key Settings for Our Workflow
+### Key Settings for Our API
 
 - **HTTP Method**: POST
-- **Response**: When Last Node Finishes
-- **Response Data**: First Entry JSON
-- **Binary Property**: Set to receive the image data
+- **Response**: JSON format
+- **Content-Type**: application/json
+- **Binary Data**: Base64 encoded images
 
 ### Advanced Options
 
-- **Allowed Origins (CORS)**: Set to allow our frontend domain
-- **Binary Property**: Enabled for image reception
-- **Raw Body**: Set for JSON format
-- **Response Content-Type**: application/json
+- **CORS**: Configured to allow frontend domain
+- **Request Format**: JSON with base64 image data
+- **Response Format**: Structured JSON
+- **Content-Type**: application/json
 
 ## Troubleshooting
 
-1. **503 Service Unavailable**: Test webhook not activated or already used
-2. **404 Not Found**: Incorrect webhook URL or webhook not registered
-3. **No Response**: n8n workflow might have errors processing the request
+1. **503 Service Unavailable**: API service may be down or overloaded
+2. **404 Not Found**: Incorrect API endpoint URL
+3. **No Response**: API may have errors processing the request
 
 ## Reference
 
-For complete n8n webhook documentation, visit the [n8n Webhook Node Documentation](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/).
+Refer to your API provider's documentation for complete integration details.
 
-## This is the structured json output from the n8n workflow to be returned to the frontend
+## This is the structured JSON output from the API to be returned to the frontend
 
 ```json
 {

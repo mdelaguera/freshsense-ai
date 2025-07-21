@@ -87,7 +87,7 @@ export default function HomePage() {
         trackAnalysisRequest(false)
         trackAnalysisComplete(results.identified_food, results.assessment_confidence, duration)
         trackUserJourney('analysis_complete_simulated')
-        toast.warning("Using simulated data - n8n webhook not available");
+        toast.warning("Using simulated data - API service not available");
         setAnalysisResults(results)
         setShowResults(true)
       } else if (!results.identified_food || results.identified_food === "Unknown") {

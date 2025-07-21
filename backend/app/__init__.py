@@ -15,7 +15,6 @@ def create_app(test_config=None):
     # Default configuration
     app.config.from_mapping(
         SECRET_KEY=os.getenv('SECRET_KEY', 'dev'),
-        N8N_WEBHOOK_URL=os.getenv('N8N_WEBHOOK_URL', 'https://nuworld.app.n8n.cloud/webhook/667fdda4-da90-487e-9c38-0c7fa7b7dfd9'),
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # Limit upload size to 16MB
     )
     

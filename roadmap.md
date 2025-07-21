@@ -7,7 +7,7 @@
 #### Frontend Optimization
 - [ ] **Testing & Bug Fixes**
   - [ ] Test image upload with various file sizes and formats
-  - [ ] Verify n8n webhook integration across different scenarios
+  - [ ] Verify API integration across different scenarios
   - [ ] Test responsive design on mobile, tablet, and desktop
   - [ ] Validate error handling for network failures and invalid responses
   - [ ] Cross-browser compatibility testing (Chrome, Safari, Firefox, Edge)
@@ -28,7 +28,7 @@
 
 #### Backend & Infrastructure
 - [ ] **API Reliability**
-  - [ ] Implement retry logic for n8n webhook calls
+  - [ ] Implement retry logic for API calls
   - [ ] Add request/response logging for debugging
   - [ ] Set up health check endpoints
   - [ ] Configure proper CORS settings

@@ -22,7 +22,7 @@ export default function TestPage() {
     { testName: "File Upload Validation", status: "pending" },
     { testName: "Image Preview Generation", status: "pending" },
     { testName: "API Integration Test", status: "pending" },
-    { testName: "N8N Webhook Response", status: "pending" },
+    { testName: "API Response", status: "pending" },
     { testName: "Error Handling", status: "pending" },
   ])
 
@@ -95,22 +95,22 @@ export default function TestPage() {
           Date.now() - apiStartTime)
       }
 
-      // Test 4: N8N Webhook Response
-      updateTestResult("N8N Webhook Response", "running")
-      const webhookStartTime = Date.now()
+      // Test 4: API Response
+      updateTestResult("API Response", "running")
+      const apiResponseStartTime = Date.now()
       
       if (result.raw_response?.simulatedData) {
-        updateTestResult("N8N Webhook Response", "failed", 
-          "Using simulated data - N8N webhook not available",
-          Date.now() - webhookStartTime)
+        updateTestResult("API Response", "failed", 
+          "Using simulated data - API service not available",
+          Date.now() - apiResponseStartTime)
       } else if (result.identified_food && result.identified_food !== "Unknown") {
-        updateTestResult("N8N Webhook Response", "passed", 
-          `N8N Analysis: ${result.identified_food} - ${result.visual_assessment}`,
-          Date.now() - webhookStartTime)
+        updateTestResult("API Response", "passed", 
+          `API Analysis: ${result.identified_food} - ${result.visual_assessment}`,
+          Date.now() - apiResponseStartTime)
       } else {
-        updateTestResult("N8N Webhook Response", "failed", 
-          "Incomplete webhook response",
-          Date.now() - webhookStartTime)
+        updateTestResult("API Response", "failed", 
+          "Incomplete API response",
+          Date.now() - apiResponseStartTime)
       }
 
       // Test 5: Error Handling
@@ -133,7 +133,7 @@ export default function TestPage() {
 
     } catch (error) {
       updateTestResult("API Integration Test", "failed", `Exception: ${error}`)
-      updateTestResult("N8N Webhook Response", "failed", `Exception: ${error}`)
+      updateTestResult("API Response", "failed", `Exception: ${error}`)
       updateTestResult("Error Handling", "failed", `Exception: ${error}`)
     }
   }
@@ -280,7 +280,7 @@ export default function TestPage() {
                 <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold">4</div>
                 <div>
                   <p className="font-medium">Test API Integration</p>
-                  <p className="text-muted-foreground">Run API tests to verify N8N webhook communication</p>
+                  <p className="text-muted-foreground">Run API tests to verify Supabase Edge Function communication</p>
                 </div>
               </div>
             </div>

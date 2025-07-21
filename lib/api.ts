@@ -62,7 +62,7 @@ async function convertToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      // For n8n webhook integration, we need to keep the complete data URL format
+      // Keep the complete data URL format for Supabase Edge Function
       // This includes the prefix like "data:image/jpeg;base64,..."
       const base64String = reader.result as string;
       resolve(base64String);
