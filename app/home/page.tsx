@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EnhancedFoodResults } from "@/components/enhanced-food-results"
 import { ImageUpload } from "@/components/image-upload"
-import { ProtectedRoute } from "@/components/protected-route"
+import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
+import { AppHeader } from "@/components/app-header"
 import { UserMenu } from "@/components/user-menu"
 import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
 import { trackImageUpload, trackAnalysisRequest, trackAnalysisComplete, trackAnalysisError, trackUserJourney } from "@/lib/analytics"
@@ -36,6 +38,8 @@ export default function HomePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResults, setAnalysisResults] = useState<FoodAnalysisResult | null>(null)
   const [progressMessage, setProgressMessage] = useState<string>("")
+  const { user } = useAuth()
+  const router = useRouter()
 
   const handleImageSelected = (file: File) => {
     setSelectedImage(file)
@@ -48,6 +52,13 @@ export default function HomePage() {
   const handleAnalyze = async () => {
     if (!selectedImage) {
       toast.error("Please select an image to analyze")
+      return
+    }
+
+    // Check if user is logged in, redirect to auth if not
+    if (!user) {
+      toast.info("Please sign in to analyze your food")
+      router.push('/auth')
       return
     }
 
@@ -118,19 +129,21 @@ export default function HomePage() {
 
   if (showResults && analysisResults) {
     return (
-      <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100">
+        <AppHeader />
         <EnhancedFoodResults 
           data={analysisResults} 
           imageUrl={imagePreview || "/placeholder.svg?height=400&width=400"} 
           onBack={handleBack} 
         />
-      </ProtectedRoute>
+      </div>
     )
   }
 
   return (
-    <ProtectedRoute>
-      <div className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100">
+      <AppHeader />
+      <div>
         {/* Hero Section */}
         <section className="relative py-20 px-4">
           <div className="container mx-auto max-w-6xl text-center">
@@ -378,6 +391,6 @@ export default function HomePage() {
           </div>
         </section>
       </div>
-    </ProtectedRoute>
+    </div>
   )
 }
