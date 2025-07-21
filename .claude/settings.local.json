@@ -27,7 +27,8 @@
       "WebFetch(domain:freshsense-ai.vercel.app)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:affiliate-program.amazon.com)"
+      "WebFetch(domain:affiliate-program.amazon.com)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
