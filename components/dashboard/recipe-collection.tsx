@@ -25,10 +25,13 @@ import {
 } from "lucide-react"
 import { InlineAffiliateDisclosure } from "@/components/affiliate-disclosure"
 import { generateValidatedAffiliateLink, trackAffiliateClick } from "@/lib/affiliate-links"
+import { RecipeModal } from "@/components/recipe-modal"
 
 export function RecipeCollection() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
+  const [selectedRecipe, setSelectedRecipe] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Mock recipe data - in real app, this would come from user's saved recipes
   const recipes = [
@@ -122,6 +125,23 @@ export function RecipeCollection() {
     } as const
     
     return <Badge variant={variants[difficulty as keyof typeof variants]}>{difficulty}</Badge>
+  }
+
+  const handleViewRecipe = (recipe: any) => {
+    setSelectedRecipe(recipe)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedRecipe(null)
+  }
+
+  const handleShopIngredients = (recipe: any) => {
+    // Use the source food (main ingredient) for shopping instead of recipe title
+    const affiliateLink = generateValidatedAffiliateLink(recipe.sourceFood)
+    trackAffiliateClick(recipe.sourceFood, affiliateLink.linkType)
+    window.open(affiliateLink.link, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -257,17 +277,16 @@ export function RecipeCollection() {
                   ~${recipe.estimatedCost}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewRecipe(recipe)}
+                  >
                     View Recipe
                   </Button>
                   <Button 
                     size="sm"
-                    onClick={() => {
-                      // Generate shopping link for main ingredient or recipe
-                      const affiliateLink = generateValidatedAffiliateLink(recipe.title)
-                      trackAffiliateClick(recipe.title, affiliateLink.linkType)
-                      window.open(affiliateLink.link, '_blank', 'noopener,noreferrer')
-                    }}
+                    onClick={() => handleShopIngredients(recipe)}
                   >
                     <ShoppingCart className="h-3 w-3 mr-1" />
                     Shop
@@ -300,6 +319,13 @@ export function RecipeCollection() {
 
       {/* Inline affiliate disclosure */}
       <InlineAffiliateDisclosure className="text-center mt-6" />
+
+      {/* Recipe Modal */}
+      <RecipeModal 
+        recipe={selectedRecipe}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   )
 }

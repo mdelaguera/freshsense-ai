@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { ImageUploader } from "@/components/image-uploader"
 import { FreshnessResults } from "@/components/freshness-results"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { FoodLabelingModal, FoodLabelData } from "@/components/food-labeling-modal"
 
 type AnalysisState = "idle" | "loading" | "results" | "error"
 
@@ -25,6 +26,8 @@ export function FoodFreshnessAnalyzer() {
     estimatedRemainingFreshness: number;
     assessmentConfidence: string;
   } | null>(null)
+  const [isLabelingModalOpen, setIsLabelingModalOpen] = useState(false)
+  const [labelingSuccess, setLabelingSuccess] = useState(false)
 
   const handleImageUpload = (imageDataUrl: string) => {
     setImage(imageDataUrl)
@@ -143,6 +146,32 @@ export function FoodFreshnessAnalyzer() {
     setAnalysisState("idle")
     setErrorMessage("")
     setResults(null)
+    setLabelingSuccess(false)
+  }
+
+  const handleOpenLabelingModal = () => {
+    setIsLabelingModalOpen(true)
+  }
+
+  const handleCloseLabelingModal = () => {
+    setIsLabelingModalOpen(false)
+  }
+
+  const handleSaveFoodLabel = async (labelData: FoodLabelData) => {
+    try {
+      // In a real app, this would save to Supabase
+      console.log('Saving food label:', labelData)
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setLabelingSuccess(true)
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setLabelingSuccess(false), 3000)
+    } catch (error) {
+      console.error('Error saving food label:', error)
+    }
   }
 
   return (
@@ -183,6 +212,30 @@ export function FoodFreshnessAnalyzer() {
         )}
 
         {analysisState === "results" && results && <FreshnessResults results={results} onReset={handleReset} />}
+
+        {labelingSuccess && (
+          <Alert className="border-green-200 bg-green-50">
+            <AlertCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Thank you! Your food label has been saved and will help improve our AI accuracy.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {(image || results) && (
+          <div className="flex flex-col gap-2 pt-4 border-t">
+            <p className="text-sm text-muted-foreground text-center">
+              Help improve our AI accuracy
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={handleOpenLabelingModal}
+              className="w-full"
+            >
+              📝 Label This Food Item
+            </Button>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col">
         <p className="text-xs text-muted-foreground text-center">
@@ -190,6 +243,20 @@ export function FoodFreshnessAnalyzer() {
           your own judgment before consumption.
         </p>
       </CardFooter>
+
+      {/* Food Labeling Modal */}
+      <FoodLabelingModal
+        imageUrl={image || undefined}
+        aiPrediction={results ? {
+          foodName: results.identifiedFood,
+          freshness: results.visualAssessment.toLowerCase().includes('fresh') ? 'fresh' : 
+                    results.visualAssessment.toLowerCase().includes('soon') ? 'soon' : 'good',
+          confidence: parseInt(results.assessmentConfidence.replace('%', '')) || 0
+        } : undefined}
+        isOpen={isLabelingModalOpen}
+        onClose={handleCloseLabelingModal}
+        onSave={handleSaveFoodLabel}
+      />
     </Card>
   )
 }
