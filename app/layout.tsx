@@ -28,9 +28,7 @@ export default function RootLayout({
         <AuthProvider>
           <AnalyticsProvider>
             <AppHeader />
-            <main className="min-h-[calc(100vh-80px)] w-full max-w-7xl mx-auto px-4 py-8">
-              {children}
-            </main>
+            {children}
           </AnalyticsProvider>
         </AuthProvider>
         <Toaster position="top-center" richColors />

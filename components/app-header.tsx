@@ -16,13 +16,22 @@ export function AppHeader() {
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuLink href="/analyze" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Analyze</NavigationMenuLink>
+                <NavigationMenuLink href="/home" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Home</NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink href="/dashboard" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Dashboard</NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuLink href="/" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Home</NavigationMenuLink>
+                <NavigationMenuLink href="/features" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Features</NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink href="/use-cases" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Use Cases</NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink href="/pricing" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Pricing</NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink href="/admin" className="text-base px-4 py-2 rounded-md font-medium text-green-900 hover:bg-fresh-green/10 transition">Admin</NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { ImageUploader } from "@/components/image-uploader"
 import { FreshnessResults } from "@/components/freshness-results"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -15,6 +16,8 @@ export function FoodFreshnessAnalyzer() {
   const [image, setImage] = useState<string | null>(null)
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle")
   const [errorMessage, setErrorMessage] = useState<string>("")
+  const [analysisProgress, setAnalysisProgress] = useState(0)
+  const [progressMessage, setProgressMessage] = useState("")
   const [results, setResults] = useState<{
     identifiedFood: string;
     visualAssessment: string;
@@ -34,12 +37,20 @@ export function FoodFreshnessAnalyzer() {
 
     setAnalysisState("loading")
     setErrorMessage("")
+    setAnalysisProgress(0)
+    setProgressMessage("Initializing analysis...")
 
     try {
+      setAnalysisProgress(10)
+      setProgressMessage("Preparing image data...")
+      
       // Format the payload for the Supabase Edge Function
       const payload = {
         image: image // The full data URL for analysis
       }
+      
+      setAnalysisProgress(20)
+      setProgressMessage("Connecting to AI service...")
       
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -53,6 +64,9 @@ export function FoodFreshnessAnalyzer() {
       console.log('Sending image to Supabase Edge Function:', edgeFunctionUrl)
       console.log(`Sending payload with image size: ${image.length} characters`)
       
+      setAnalysisProgress(30)
+      setProgressMessage("Sending image for analysis...")
+      
       const response = await fetch(edgeFunctionUrl, {
         method: 'POST',
         headers: {
@@ -63,7 +77,13 @@ export function FoodFreshnessAnalyzer() {
         body: JSON.stringify(payload)
       })
       
+      setAnalysisProgress(60)
+      setProgressMessage("AI analyzing your food...")
+      
       const data = await response.json()
+      
+      setAnalysisProgress(80)
+      setProgressMessage("Processing results...")
       
       // Check if there was an error in the response
       if (!response.ok || data.error) {
@@ -74,6 +94,9 @@ export function FoodFreshnessAnalyzer() {
       
       console.log('Received response from Supabase Edge Function:', data)
       
+      setAnalysisProgress(90)
+      setProgressMessage("Finalizing analysis...")
+      
       // Transform the response to match what FreshnessResults component expects
       const transformedResults = {
         identifiedFood: data.identified_food,
@@ -83,13 +106,24 @@ export function FoodFreshnessAnalyzer() {
         assessmentConfidence: data.confidence
       }
       
-      setResults(transformedResults)
-      setAnalysisState("results")
+      setAnalysisProgress(100)
+      setProgressMessage("Analysis complete!")
+      
+      // Small delay to show completion
+      setTimeout(() => {
+        setResults(transformedResults)
+        setAnalysisState("results")
+        setAnalysisProgress(0)
+        setProgressMessage("")
+      }, 500)
+      
     } catch (error) {
       console.error("Analysis error details:", error)
       setErrorMessage(error instanceof Error ? error.message : "Unknown error occurred")
       console.log("Using proxy-provided error response")
       setAnalysisState("error")
+      setAnalysisProgress(0)
+      setProgressMessage("")
     }
   }
 
@@ -127,9 +161,15 @@ export function FoodFreshnessAnalyzer() {
         )}
 
         {analysisState === "loading" && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-sm text-muted-foreground">Analyzing your food...</p>
+          <div className="flex flex-col items-center justify-center py-8 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+            <div className="w-full max-w-md space-y-2">
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-muted-foreground">{progressMessage}</p>
+                <span className="text-xs text-muted-foreground">{analysisProgress}%</span>
+              </div>
+              <Progress value={analysisProgress} className="w-full" />
+            </div>
           </div>
         )}
 

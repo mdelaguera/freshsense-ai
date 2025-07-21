@@ -24,7 +24,10 @@
       "WebFetch(domain:agent-magicui.vercel.app)",
       "Bash(vercel:*)",
       "Bash(npm run lint)",
-      "WebFetch(domain:freshsense-ai.vercel.app)"
+      "WebFetch(domain:freshsense-ai.vercel.app)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:affiliate-program.amazon.com)"
     ],
     "deny": []
   }
