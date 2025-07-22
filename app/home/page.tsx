@@ -9,7 +9,6 @@ import { EnhancedFoodResults } from "@/components/enhanced-food-results"
 import { ImageUpload } from "@/components/image-upload"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
-import { AppHeader } from "@/components/app-header"
 import { UserMenu } from "@/components/user-menu"
 import { analyzeFoodImage, type FoodAnalysisResult } from "@/lib/api"
 import { trackImageUpload, trackAnalysisRequest, trackAnalysisComplete, trackAnalysisError, trackUserJourney } from "@/lib/analytics"
@@ -130,7 +129,6 @@ export default function HomePage() {
   if (showResults && analysisResults) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100">
-        <AppHeader />
         <EnhancedFoodResults 
           data={analysisResults} 
           imageUrl={imagePreview || "/placeholder.svg?height=400&width=400"} 
@@ -142,7 +140,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-fresh-green-50 via-white to-fresh-green-100">
-      <AppHeader />
       <div>
         {/* Hero Section */}
         <section className="relative py-20 px-4">
