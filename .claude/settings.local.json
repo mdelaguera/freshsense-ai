@@ -28,7 +28,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:affiliate-program.amazon.com)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(move content\\pricing_new.md content\\pricing.md)"
     ],
     "deny": []
   }
